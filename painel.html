@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Sites RNO</title>
-<!-- v4: TRATATIVA POR SETOR — 1) Site  2) Setor (VISAO_FILTRO) da data  3) Tratativa
+<!-- v5: 1º quadro por STATION + ERB (site com 2 ERBs = 2 linhas) · tratativa por SETOR
      CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO somente leitura -->
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
@@ -53,6 +53,7 @@ tbody tr.sel{background:var(--sel);box-shadow:inset 4px 0 0 var(--red)}
 .p-sem{background:#FDE2E2;color:#B71C1C} .p-and{background:#FFF0D9;color:#9A5200}
 .p-con{background:#DDF5E6;color:#0B6B33} .p-out{background:#E8EAED;color:#555}
 .av-r{color:var(--red);font-weight:700} .av-g{color:var(--green);font-weight:700}
+.erb{font-family:Consolas,monospace;font-size:12px;color:#333}
 .grid2{display:grid;grid-template-columns:1.25fr .8fr 1.25fr;gap:10px}
 @media (max-width:1100px){.grid2{grid-template-columns:1fr 1fr}}
 @media (max-width:700px){.grid2{grid-template-columns:1fr}}
@@ -88,7 +89,7 @@ textarea{min-height:56px;resize:vertical}
 <body>
 <div class="hdr">
   <h1>PAINEL DE DISPONIBILIDADE — SITES QUE MERECEM ATENÇÃO (AVAIL ≤ 99,60)
-    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · tratativa por SETOR · mesmas tabelas do painel VBA</span></h1>
+    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · Site/ERB → Setor → Tratativa · mesmas tabelas do painel VBA</span></h1>
   <div class="tabs">
     <button type="button" class="tab on" id="tabTrat">Tratativa</button>
     <button type="button" class="tab" id="tabEvol">Evolutivo diário</button>
@@ -105,7 +106,7 @@ textarea{min-height:56px;resize:vertical}
     <div class="f"><label for="fCN">CN</label><select id="fCN"></select></div>
     <div class="f"><label for="fMun">Município</label><select id="fMun"></select></div>
     <div class="f"><label for="fOwn">Cell Owner</label><select id="fOwn"></select></div>
-    <div class="f"><label for="fBusca">Buscar Station</label><input id="fBusca" placeholder="3+ letras"></div>
+    <div class="f"><label for="fBusca">Buscar Station / ERB</label><input id="fBusca" placeholder="3+ letras"></div>
     <div class="f"><label for="fStat">Tratativa do site</label><select id="fStat"></select></div>
     <div class="chk"><input type="checkbox" id="fAtt" checked><label for="fAtt">Só ≤ 99,60</label></div>
     <div><button type="button" class="btn b-gry" id="btnLimpar" style="width:100%">Limpar</button></div>
@@ -113,20 +114,20 @@ textarea{min-height:56px;resize:vertical}
 
   <div id="pgTrat">
     <div class="kpis">
-      <div class="kpi k"><div class="v" id="kList">0</div><div class="l">Sites listados</div></div>
-      <div class="kpi"><div class="v" id="kAtt">0</div><div class="l">Sites com setores ≤ 99,60</div></div>
+      <div class="kpi k"><div class="v" id="kList">0</div><div class="l">Site/ERB listados</div></div>
+      <div class="kpi"><div class="v" id="kAtt">0</div><div class="l">Com setores ≤ 99,60</div></div>
       <div class="kpi o"><div class="v" id="kSem">0</div><div class="l">Em atenção SEM tratativa</div></div>
       <div class="kpi g"><div class="v" id="kSet">0</div><div class="l">Setores tratados na data</div></div>
     </div>
 
     <div class="card" style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <p class="ttl"><span class="num">1</span><span id="ttlSites">Selecione o SITE</span></p>
+        <p class="ttl"><span class="num">1</span><span id="ttlSites">Selecione o SITE / ERB</span></p>
         <button type="button" class="btn b-out" id="btnExportar">Exportar setores para o Excel</button>
       </div>
       <div class="tblw" style="max-height:300px">
         <table id="tbSites"><thead><tr>
-          <th>Station</th><th>Tec</th><th>UF</th><th>CN</th><th>Município</th><th>Cell Owner</th>
+          <th>Station</th><th>ERB</th><th>Tec</th><th>UF</th><th>CN</th><th>Município</th><th>Cell Owner</th>
           <th class="n">Avail mín</th><th class="n">Avail méd</th><th class="n">Setores</th><th class="n">Set. ≤99,6</th><th>Tratativa</th>
         </tr></thead><tbody></tbody></table>
       </div>
@@ -135,20 +136,20 @@ textarea{min-height:56px;resize:vertical}
     <div class="grid2" style="margin-top:10px">
       <div class="card">
         <p class="ttl"><span class="num">2</span>Selecione o SETOR (somente a data escolhida)</p>
-        <div class="sitehdr" id="siteHdr">Selecione um site no quadro 1.</div>
+        <div class="sitehdr" id="siteHdr">Selecione um site/ERB no quadro 1.</div>
         <div class="tblw" style="max-height:290px">
           <table id="tbCel"><thead><tr><th>Célula (ERB)</th><th>Setor (VISAO_FILTRO)</th><th class="n">Avail</th><th>Tratativa</th></tr></thead><tbody></tbody></table>
         </div>
       </div>
       <div class="card">
-        <p class="ttl">Histórico do site (30 dias)</p>
+        <p class="ttl">Histórico da ERB (30 dias)</p>
         <div class="tblw" style="max-height:330px">
           <table id="tbHist"><thead><tr><th>Data</th><th class="n">Mín</th><th class="n">Méd</th><th class="n">≤99,6</th></tr></thead><tbody></tbody></table>
         </div>
       </div>
       <div class="card form off" id="formTrat">
         <p class="ttl"><span class="num">3</span>Tratativa do setor</p>
-        <div class="sitehdr" id="setorHdr">Selecione o site (1) e o setor (2).</div>
+        <div class="sitehdr" id="setorHdr">Selecione o site/ERB (1) e o setor (2).</div>
         <div class="row"><label for="tCausa">Causa Disponibilidade</label><input id="tCausa" list="lCausa" disabled><datalist id="lCausa"></datalist></div>
         <div class="row"><label for="tTMR">Causa TMR</label><input id="tTMR" list="lTMR" disabled><datalist id="lTMR"></datalist></div>
         <div class="row"><label for="tDesc">Descrição da Falha</label><input id="tDesc" list="lDesc" disabled><datalist id="lDesc"></datalist></div>
@@ -222,7 +223,9 @@ function fmtD(d){const x=serialToDate(d);return String(x.getUTCDate()).padStart(
 function ymd(d){const x=serialToDate(d);return x.getUTCFullYear()+String(x.getUTCMonth()+1).padStart(2,"0")+String(x.getUTCDate()).padStart(2,"0");}
 function agoraSerial(){const n=new Date();return (n.getTime()-n.getTimezoneOffset()*60000)/86400000+25569;}
 const f2=x=>isFinite(x)?x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"-";
-const chaveGrupo=(st,tec)=>st.toUpperCase()+"|"+tec.toUpperCase();
+/* Agrupamento do 1º quadro = STATION | TECNOLOGIA | ERB */
+const chaveGrupo=(st,tec,erb)=>st.toUpperCase()+"|"+tec.toUpperCase()+"|"+erb.toUpperCase();
+const grupoDe=i=>chaveGrupo(B.st[i],B.tec[i],B.erb[i]);
 /* CHAVE ÚNICA = DATA | STATION_NAME | ERB | VISAO_FILTRO */
 function chaveCel(d,st,erb,vis){if(!(d>0))return"";return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();}
 const chaveLinha=i=>chaveCel(B.day[i],B.st[i],B.erb[i],B.vis[i]);
@@ -258,7 +261,7 @@ async function carregarTudo(){
     await carregarListas();
     const dup=await carregarTratativas(true);
     preencherFiltros();ovl(false);aplicarFiltro();
-    if(dup>0)toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (o ANALITICO não é alterado).\nRegra: DATA + STATION_NAME + ERB + VISAO_FILTRO.","wrn");
+    if(dup>0)toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (o ANALITICO não é alterado).","wrn");
   }catch(e){ovl(false);toast("Erro ao carregar",e.message||String(e),"err");setStatus("Erro: "+(e.message||e));}
 }
 
@@ -290,7 +293,7 @@ async function carregarBase(){
   });
   grp=new Map();dayIdx=new Map();
   for(let i=0;i<B.n;i++){
-    const k=chaveGrupo(B.st[i],B.tec[i]);let a=grp.get(k);if(!a){a=[];grp.set(k,a);}a.push(i);
+    const k=grupoDe(i);let a=grp.get(k);if(!a){a=[];grp.set(k,a);}a.push(i);
     const d=B.day[i];if(d>0){let b=dayIdx.get(d);if(!b){b=[];dayIdx.set(d,b);}b.push(i);}
   }
   datas=[...dayIdx.keys()].sort((a,b)=>b-a);
@@ -332,7 +335,6 @@ async function garantirTabelaTrat(ctx){
   await ctx.sync();return t;
 }
 
-/* Tratativas POR SETOR: trat = CHAVE -> {causa,tmr,desc,status,obs} */
 async function carregarTratativas(sanear){
   let removidas=0;
   await Excel.run(async ctx=>{
@@ -375,16 +377,16 @@ function passa(i,F){
   if(F.tec&&B.tec[i]!==F.tec)return false;if(F.uf&&B.uf[i]!==F.uf)return false;
   if(F.cn&&B.cn[i]!==F.cn)return false;if(F.mun&&B.mun[i]!==F.mun)return false;
   if(F.own&&(B.own[i]||SEM_OWNER)!==F.own)return false;
-  if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0)return false;return true;}
+  if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0&&B.erb[i].toUpperCase().indexOf(F.busca)<0)return false;return true;}
 
-/* ===== QUADRO 1: SITES ===== */
+/* ===== QUADRO 1: SITE / ERB ===== */
 function aplicarFiltro(){
   if(!B.n)return;
   dSel=datas[+$("fData").value||0];const F=lerFiltros();const m=new Map();let nSetTrat=0;
   for(const i of(dayIdx.get(dSel)||[])){
     if(!passa(i,F))continue;
-    const k=chaveGrupo(B.st[i],B.tec[i]);let r=m.get(k);
-    if(!r){r={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0,tA:0,tT:0};m.set(k,r);}
+    const k=grupoDe(i);let r=m.get(k);
+    if(!r){r={st:B.st[i],erb:B.erb[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0,tA:0,tT:0};m.set(k,r);}
     r.qc++;const tr=trat.has(chaveLinha(i));if(tr)r.tT++;
     const a=B.av[i];if(!isNaN(a)){if(a<r.min)r.min=a;r.soma+=a;r.qa++;if(a<=LIMITE){r.att++;if(tr)r.tA++;}}
   }
@@ -395,61 +397,61 @@ function aplicarFiltro(){
     if(r.att>0){nAtt++;if(r.tA===0)nSem++;}nSetTrat+=r.tT;
     r.med=r.qa?r.soma/r.qa:NaN;if(!r.qa)r.min=NaN;sitesView.push(r);
   }
-  sitesView.sort((a,b)=>(isNaN(a.min)?1000:a.min)-(isNaN(b.min)?1000:b.min));
+  sitesView.sort((a,b)=>((isNaN(a.min)?1000:a.min)-(isNaN(b.min)?1000:b.min))||a.st.localeCompare(b.st)||a.erb.localeCompare(b.erb));
   $("kList").textContent=sitesView.length.toLocaleString("pt-BR");$("kAtt").textContent=nAtt.toLocaleString("pt-BR");
   $("kSem").textContent=nSem.toLocaleString("pt-BR");$("kSet").textContent=nSetTrat.toLocaleString("pt-BR");
-  $("ttlSites").textContent="Selecione o SITE · "+fmtD(dSel)+" · do pior AVAIL para o melhor";
+  $("ttlSites").textContent="Selecione o SITE / ERB · "+fmtD(dSel)+" · do pior AVAIL para o melhor";
   renderSites();limparDetalhe();
-  setStatus("Passo 1: selecione um SITE.  (Base: "+B.n.toLocaleString("pt-BR")+" linhas no ANALITICO)");
+  setStatus("Passo 1: selecione um SITE/ERB.  (Base: "+B.n.toLocaleString("pt-BR")+" linhas no ANALITICO)");
   if(!$("pgEvol").classList.contains("hide"))renderEvolutivo();
 }
 function avCls(x){return isNaN(x)?"":(x<=LIMITE?"av-r":"av-g");}
-function linhaSite(r,ix){return"<tr class=\"clk\" data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
+function linhaSite(r,ix){return"<tr class=\"clk\" data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td class=\"erb\">"+esc(r.erb)+"</td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
   "</td><td>"+esc(r.own)+"</td><td class=\"n "+avCls(r.min)+"\">"+f2(r.min)+"</td><td class=\"n "+avCls(r.med)+"\">"+f2(r.med)+
   "</td><td class=\"n\">"+r.qc+"</td><td class=\"n\">"+r.att+"</td><td><span class=\"pill "+pillCls(r.stt)+"\">"+esc(r.stt)+"</span></td></tr>";}
 function renderSites(){
-  $("tbSites").tBodies[0].innerHTML=sitesView.map(linhaSite).join("")||"<tr><td colspan=\"11\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
+  $("tbSites").tBodies[0].innerHTML=sitesView.map(linhaSite).join("")||"<tr><td colspan=\"12\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
 }
 function atualizarLinhaSite(){
   const r=siteSel;if(!r)return;let att=0,tA=0,tT=0;
-  for(const i of(grp.get(chaveGrupo(r.st,r.tec))||[])){if(B.day[i]!==dSel)continue;const tr=trat.has(chaveLinha(i));if(tr)tT++;
+  for(const i of(grp.get(chaveGrupo(r.st,r.tec,r.erb))||[])){if(B.day[i]!==dSel)continue;const tr=trat.has(chaveLinha(i));if(tr)tT++;
     const a=B.av[i];if(!isNaN(a)&&a<=LIMITE){att++;if(tr)tA++;}}
   r.tA=tA;r.tT=tT;r.stt=statusSite(att,tA,tT);
   const ix=sitesView.indexOf(r);const tr=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");
   if(tr){tr.outerHTML=linhaSite(r,ix);const n=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");if(n)n.classList.add("sel");}
 }
 
-/* ===== FORMULÁRIO ===== */
 const CAMPOS=["tCausa","tTMR","tDesc","tStatus","tObs"];
 function formAtivo(on){CAMPOS.forEach(id=>$(id).disabled=!on);$("formTrat").classList.toggle("off",!on);$("btnSalvar").disabled=!on;}
 function limparForm(){
   setorSel=-1;CAMPOS.forEach(id=>$(id).value="");formAtivo(false);
   $("btnSalvar").textContent="Salvar tratativa";$("btnSalvar").className="btn b-red";$("btnCancelar").disabled=true;
-  $("setorHdr").className="sitehdr";$("setorHdr").textContent=siteSel?"Passo 2: selecione o SETOR no quadro 2.":"Selecione o site (1) e o setor (2).";
+  $("setorHdr").className="sitehdr";$("setorHdr").textContent=siteSel?"Passo 2: selecione o SETOR no quadro 2.":"Selecione o site/ERB (1) e o setor (2).";
   $("chaveTxt").textContent="";
 }
 function limparDetalhe(){siteSel=null;$("tbCel").tBodies[0].innerHTML="";$("tbHist").tBodies[0].innerHTML="";
-  $("siteHdr").textContent="Selecione um site no quadro 1.";limparForm();}
+  $("siteHdr").textContent="Selecione um site/ERB no quadro 1.";limparForm();}
 
-/* ===== QUADRO 2: SETORES DA DATA ===== */
+/* ===== QUADRO 2: SETORES DA ERB NA DATA ===== */
+function setoresDoSite(r){
+  const cel=(grp.get(chaveGrupo(r.st,r.tec,r.erb))||[]).filter(i=>B.day[i]===dSel);
+  cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));return cel;}
 function mostrarSite(ix){
   const r=sitesView[ix];if(!r)return;siteSel=r;
   [...$("tbSites").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.ix===ix));
-  const rows=grp.get(chaveGrupo(r.st,r.tec))||[];const cel=[],H=new Map();
-  for(const i of rows){
+  const H=new Map();
+  for(const i of(grp.get(chaveGrupo(r.st,r.tec,r.erb))||[])){
     const d=B.day[i];if(d<=0)continue;let h=H.get(d);if(!h){h={min:Infinity,s:0,q:0,att:0};H.set(d,h);}
     const a=B.av[i];if(!isNaN(a)){if(a<h.min)h.min=a;h.s+=a;h.q++;if(a<=LIMITE)h.att++;}
-    if(d===dSel)cel.push(i);                              // SOMENTE a data selecionada
   }
-  cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));
-  renderSetores(cel);
+  const cel=setoresDoSite(r);renderSetores(cel);
   const dias=[...H.keys()].sort((a,b)=>b-a).slice(0,MAX_HIST);
   $("tbHist").tBodies[0].innerHTML=dias.map(d=>{const h=H.get(d);const mn=h.q?h.min:NaN,md=h.q?h.s/h.q:NaN;
     return"<tr"+(d===dSel?" class=\"sel\"":"")+"><td>"+fmtD(d)+"</td><td class=\"n "+avCls(mn)+"\">"+f2(mn)+"</td><td class=\"n "+avCls(md)+"\">"+f2(md)+"</td><td class=\"n\">"+h.att+"</td></tr>";}).join("");
   const nAtt=cel.filter(i=>!isNaN(B.av[i])&&B.av[i]<=LIMITE).length;
-  $("siteHdr").textContent=r.st+" · "+r.tec+" · "+r.mun+"/"+r.uf+" · "+fmtD(dSel)+" · "+cel.length+" setor(es), "+nAtt+" ≤ 99,60";
+  $("siteHdr").textContent=r.st+" · "+r.erb+" · "+r.tec+" · "+r.mun+"/"+r.uf+" · "+fmtD(dSel)+" · "+cel.length+" setor(es), "+nAtt+" ≤ 99,60";
   limparForm();
-  setStatus("Site "+r.st+" selecionado. Passo 2: selecione o SETOR (VISAO_FILTRO).");
+  setStatus("Site "+r.st+" / ERB "+r.erb+" selecionado. Passo 2: selecione o SETOR (VISAO_FILTRO).");
 }
 function stSetor(i){const t=trat.get(chaveLinha(i));if(t)return t.status||"Registrado";const a=B.av[i];return(!isNaN(a)&&a<=LIMITE)?SEM_TRAT:"-";}
 function renderSetores(cel){
@@ -458,7 +460,6 @@ function renderSetores(cel){
       "</td><td><span class=\"pill "+pillCls(s)+"\">"+esc(s)+"</span></td></tr>";}).join("")||"<tr><td colspan=\"4\" style=\"color:#888\">Sem setores na data.</td></tr>";
 }
 
-/* ===== SELEÇÃO DO SETOR -> CHAVE COMPLETA ===== */
 function mostrarSetor(i){
   if(!siteSel)return;setorSel=i;
   [...$("tbCel").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.i===i));
@@ -479,14 +480,11 @@ function mostrarSetor(i){
     setStatus("Setor sem tratativa. Passo 3: preencha e clique em 'Salvar tratativa'.");
   }
 }
-function refreshSetores(){const r=siteSel;if(!r)return;
-  const cel=(grp.get(chaveGrupo(r.st,r.tec))||[]).filter(i=>B.day[i]===dSel);
-  cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));renderSetores(cel);}
+function refreshSetores(){if(siteSel)renderSetores(setoresDoSite(siteSel));}
 
-/* ===== SALVAR (1 linha por setor, upsert pela CHAVE) ===== */
 let salvando=false;
 async function salvar(){
-  const i=setorSel,r=siteSel;if(!r||i<0||salvando){toast("Atenção","Selecione o SITE (1) e o SETOR (2).","wrn");return;}
+  const i=setorSel,r=siteSel;if(!r||i<0||salvando){toast("Atenção","Selecione o SITE/ERB (1) e o SETOR (2).","wrn");return;}
   const causa=$("tCausa").value.trim(),tmr=$("tTMR").value.trim(),desc=$("tDesc").value.trim(),status=$("tStatus").value.trim(),obs=$("tObs").value.trim();
   if(!causa||!status){toast("Campos obrigatórios","Preencha pelo menos 'Causa Disponibilidade' e 'Status'.","wrn");return;}
   const usuario=$("usuario").value.trim()||"HTML";localStorage.setItem("rnoUsuario",usuario);
@@ -514,17 +512,16 @@ async function salvar(){
     trat.set(k,{causa,tmr,desc,status,obs});
     refreshSetores();atualizarLinhaSite();mostrarSetor(i);
     toast(jaExistia?"TRATATIVA ATUALIZADA COM SUCESSO!":"TRATATIVA CADASTRADA COM SUCESSO!",
-      "Site: "+B.st[i]+" ("+B.tec[i]+")\nSetor: "+B.vis[i]+"  |  ERB: "+B.erb[i]+"\nData: "+fmtD(dSel)+"\nStatus: "+status);
+      "Site: "+B.st[i]+" ("+B.tec[i]+")\nERB: "+B.erb[i]+"  |  Setor: "+B.vis[i]+"\nData: "+fmtD(dSel)+"\nStatus: "+status);
     setStatus("Tratativa do setor "+B.vis[i]+" gravada. Selecione outro setor ou site. Salve a pasta (Ctrl+B).");
   }catch(e){toast("Erro ao gravar a tratativa",e.message||String(e),"err");}
   finally{salvando=false;$("btnSalvar").disabled=setorSel<0;}
 }
 
-/* ===== CANCELAR (somente o setor) ===== */
 async function cancelar(){
   const i=setorSel;if(i<0)return;const k=chaveLinha(i);
   if(!trat.has(k)){toast("Atenção","Este setor não possui tratativa nesta data.","wrn");return;}
-  const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa deste SETOR?\n\nSite: "+B.st[i]+" ("+B.tec[i]+")\nSetor: "+B.vis[i]+"\nData: "+fmtD(dSel)+
+  const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa deste SETOR?\n\nSite: "+B.st[i]+" ("+B.tec[i]+")\nERB: "+B.erb[i]+"\nSetor: "+B.vis[i]+"\nData: "+fmtD(dSel)+
     "\n\nA linha será EXCLUÍDA da aba "+ABA_TRAT+" (o ANALITICO não é alterado).");
   if(!ok)return;let nDel=0;
   try{
@@ -541,7 +538,6 @@ async function cancelar(){
   }catch(e){toast("Erro ao cancelar a tratativa",e.message||String(e),"err");}
 }
 
-/* ===== EXPORTAR: 1 linha por SETOR ===== */
 async function prepararAba(ctx,nome){
   let ws=ctx.workbook.worksheets.getItemOrNullObject(nome);await ctx.sync();
   if(ws.isNullObject)ws=ctx.workbook.worksheets.add(nome);
@@ -554,8 +550,8 @@ async function exportar(){
   const out=[["DATA","STATION","TECNOLOGIA","UF","CN","MUNICÍPIO","CELL OWNER","ERB","SETOR (VISAO_FILTRO)","AVAIL","STATUS TRATATIVA",
               "CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO","CHAVE"]];
   for(const r of sitesView){
-    for(const i of(grp.get(chaveGrupo(r.st,r.tec))||[])){
-      if(B.day[i]!==dSel)continue;const a=B.av[i];if(soAtt&&!(!isNaN(a)&&a<=LIMITE))continue;
+    for(const i of setoresDoSite(r)){
+      const a=B.av[i];if(soAtt&&!(!isNaN(a)&&a<=LIMITE))continue;
       const k=chaveLinha(i),t=trat.get(k)||{},cn=Number(B.cn[i]);
       out.push([dSel,B.st[i],B.tec[i],B.uf[i],(B.cn[i]!==""&&isFinite(cn))?cn:B.cn[i],B.mun[i],B.own[i],B.erb[i],B.vis[i],isNaN(a)?"":a,
                 t.status||SEM_TRAT,t.causa||"",t.tmr||"",t.desc||"",t.obs||"",k]);
@@ -569,19 +565,19 @@ async function exportar(){
       ws.getRangeByIndexes(1,0,n,1).numberFormat=fill(n,1,"dd/mm/yyyy");ws.getRangeByIndexes(1,9,n,1).numberFormat=fill(n,1,"0.00");
       ws.autoFilter.apply(rg);rg.format.autofitColumns();ws.activate();await ctx.sync();
     });
-    toast("Exportação concluída",n+" setor(es) de "+sitesView.length+" site(s) na aba '"+ABA_EXPORT+"'.");
+    toast("Exportação concluída",n+" setor(es) de "+sitesView.length+" site/ERB na aba '"+ABA_EXPORT+"'.");
   }catch(e){toast("Erro ao exportar",e.message||String(e),"err");}
 }
 
-/* ===== EVOLUTIVO ===== */
+/* ===== EVOLUTIVO (1 linha por STATION + ERB) ===== */
 let evol=null;
 function calcEvolutivo(){
   const x=serialToDate(dSel),y=x.getUTCFullYear(),mo=x.getUTCMonth();
   const d1=Math.round((Date.UTC(y,mo,1)-Date.UTC(1899,11,30))/86400000),nd=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
   const F=lerFiltros(),metr=$("eMetr").value,S=new Map();
   for(let dd=0;dd<nd;dd++)for(const i of(dayIdx.get(d1+dd)||[])){
-    const a=B.av[i];if(isNaN(a)||!passa(i,F))continue;const k=chaveGrupo(B.st[i],B.tec[i]);let s=S.get(k);
-    if(!s){s={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,sum:new Float64Array(nd),cnt:new Int32Array(nd),min:new Float64Array(nd).fill(Infinity)};S.set(k,s);}
+    const a=B.av[i];if(isNaN(a)||!passa(i,F))continue;const k=grupoDe(i);let s=S.get(k);
+    if(!s){s={st:B.st[i],erb:B.erb[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,sum:new Float64Array(nd),cnt:new Int32Array(nd),min:new Float64Array(nd).fill(Infinity)};S.set(k,s);}
     s.sum[dd]+=a;s.cnt[dd]++;if(a<s.min[dd])s.min[dd]=a;}
   const lista=[];
   for(const s of S.values()){s.val=new Array(nd).fill(null);let soma=0,q=0;s.verm=0;
@@ -592,12 +588,12 @@ function calcEvolutivo(){
 }
 function renderEvolutivo(){
   if(!B.n)return;calcEvolutivo();const E=evol;
-  $("ttlEvol").textContent="Evolutivo diário · "+E.mes+" · "+E.lista.length.toLocaleString("pt-BR")+" site(s)";
-  let th="<tr><th class=\"st\">Station</th><th>Tec</th><th>UF</th><th>Município</th><th>Owner</th><th class=\"n\">Dias ≤99,6</th><th class=\"n\">Média mês</th>";
+  $("ttlEvol").textContent="Evolutivo diário · "+E.mes+" · "+E.lista.length.toLocaleString("pt-BR")+" site/ERB";
+  let th="<tr><th class=\"st\">Station</th><th>ERB</th><th>Tec</th><th>UF</th><th>Município</th><th>Owner</th><th class=\"n\">Dias ≤99,6</th><th class=\"n\">Média mês</th>";
   for(let dd=0;dd<E.nd;dd++)th+="<th>"+String(dd+1).padStart(2,"0")+"/"+E.mes.slice(0,2)+"</th>";
   $("tbEvol").tHead.innerHTML=th+"</tr>";
   const LIM=600,h=[];
-  E.lista.slice(0,LIM).forEach(s=>{let tr="<tr><td class=\"st\">"+esc(s.st)+"</td><td>"+esc(s.tec)+"</td><td>"+esc(s.uf)+"</td><td>"+esc(s.mun)+"</td><td>"+esc(s.own)+
+  E.lista.slice(0,LIM).forEach(s=>{let tr="<tr><td class=\"st\">"+esc(s.st)+"</td><td class=\"erb\">"+esc(s.erb)+"</td><td>"+esc(s.tec)+"</td><td>"+esc(s.uf)+"</td><td>"+esc(s.mun)+"</td><td>"+esc(s.own)+
     "</td><td class=\"n\"><b>"+s.verm+"</b></td><td class=\"n "+avCls(s.media)+"\">"+f2(s.media)+"</td>";
     for(const v of s.val)tr+=v===null?"<td class=\"c ce\">·</td>":"<td class=\"c "+(v<=LIMITE?"cr":"cg")+"\">"+f2(v)+"</td>";h.push(tr+"</tr>");});
   if(E.lista.length>LIM)h.push("<tr><td colspan=\"40\" style=\"color:#888\">Exibindo os "+LIM+" piores. Use 'Gerar aba no Excel' para a lista completa.</td></tr>");
@@ -605,26 +601,26 @@ function renderEvolutivo(){
 }
 async function evolExcel(){
   if(!evol)calcEvolutivo();const E=evol,n=E.lista.length;if(!n){toast("Evolutivo","Nenhum site para os filtros.","wrn");return;}
-  const NF=8,NC=NF+E.nd,cab=["STATION_NAME","TEC","UF","CN","MUNICÍPIO","CELL OWNER","DIAS <=99,6","MÉDIA MÊS"];
+  const NF=9,NC=NF+E.nd,cab=["STATION_NAME","ERB","TEC","UF","CN","MUNICÍPIO","CELL OWNER","DIAS <=99,6","MÉDIA MÊS"];
   for(let dd=0;dd<E.nd;dd++)cab.push(E.d1+dd);const out=[cab];
-  for(const s of E.lista){const cn=Number(s.cn);out.push([s.st,s.tec,s.uf,(s.cn!==""&&isFinite(cn))?cn:s.cn,s.mun,s.own,s.verm,isNaN(s.media)?"":Math.round(s.media*100)/100,...s.val.map(v=>v===null?"":v)]);}
+  for(const s of E.lista){const cn=Number(s.cn);out.push([s.st,s.erb,s.tec,s.uf,(s.cn!==""&&isFinite(cn))?cn:s.cn,s.mun,s.own,s.verm,isNaN(s.media)?"":Math.round(s.media*100)/100,...s.val.map(v=>v===null?"":v)]);}
   try{
     await Excel.run(async ctx=>{
       const ws=await prepararAba(ctx,ABA_EVOL),F=lerFiltros();
       ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+(F.tec||TODOS)+"  UF: "+(F.uf||TODOS)+"  CN: "+(F.cn||TODOS)+"  Município: "+(F.mun||TODOS)+"  Owner: "+(F.own||TODOS)]];
       ws.getRange("A1").format.font.bold=true;ws.getRange("A1").format.font.size=13;ws.getRange("A1").format.font.color="#548235";
-      ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior setor":"média dos setores")]];
+      ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior setor da ERB":"média dos setores da ERB")]];
       const rg=ws.getRangeByIndexes(3,0,n+1,NC);rg.values=out;
       const h=ws.getRangeByIndexes(3,0,1,NC);h.format.fill.color="#548235";h.format.font.color="#FFFFFF";h.format.font.bold=true;
       ws.getRangeByIndexes(3,NF,1,E.nd).numberFormat=fill(1,E.nd,"dd/mm");
-      const rc=ws.getRangeByIndexes(4,7,n,E.nd+1);rc.numberFormat=fill(n,E.nd+1,"0.00");rc.format.horizontalAlignment="Center";
-      const c1=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c1.custom.rule.formula="=AND(H5<>\"\",H5<=$B$2)";
+      const rc=ws.getRangeByIndexes(4,8,n,E.nd+1);rc.numberFormat=fill(n,E.nd+1,"0.00");rc.format.horizontalAlignment="Center";
+      const c1=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c1.custom.rule.formula="=AND(I5<>\"\",I5<=$B$2)";
       c1.custom.format.fill.color="#E60000";c1.custom.format.font.color="#FFFFFF";
-      const c2=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c2.custom.rule.formula="=AND(H5<>\"\",H5>$B$2)";
+      const c2=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c2.custom.rule.formula="=AND(I5<>\"\",I5>$B$2)";
       c2.custom.format.fill.color="#00964A";c2.custom.format.font.color="#FFFFFF";
-      ws.autoFilter.apply(rg);ws.freezePanes.freezeAt(ws.getRange("A1:A4"));ws.activate();await ctx.sync();
+      ws.autoFilter.apply(rg);ws.freezePanes.freezeAt(ws.getRange("A1:B4"));ws.activate();await ctx.sync();
     });
-    toast("Evolutivo gerado",n+" site(s) na aba '"+ABA_EVOL+"'.");
+    toast("Evolutivo gerado",n+" site/ERB na aba '"+ABA_EVOL+"'.");
   }catch(e){toast("Erro ao gerar o evolutivo",e.message||String(e),"err");}
 }
 
