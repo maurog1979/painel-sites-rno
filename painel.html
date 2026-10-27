@@ -5,6 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Sites RNO</title>
+<!-- v3: CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO lido 100% (nenhuma linha ignorada/excluída) -->
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
 :root{
@@ -116,7 +117,6 @@ textarea{min-height:56px;resize:vertical}
     <div><button type="button" class="btn b-gry" id="btnLimpar" style="width:100%">Limpar</button></div>
   </div>
 
-  <!-- ===================== ABA TRATATIVA ===================== -->
   <div id="pgTrat">
     <div class="kpis">
       <div class="kpi k"><div class="v" id="kList">0</div><div class="l">Sites listados</div></div>
@@ -166,7 +166,6 @@ textarea{min-height:56px;resize:vertical}
     </div>
   </div>
 
-  <!-- ===================== ABA EVOLUTIVO ===================== -->
   <div id="pgEvol" class="hide">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
@@ -198,7 +197,6 @@ textarea{min-height:56px;resize:vertical}
 
 <script>
 "use strict";
-/* ======================= CONFIGURAÇÃO (igual ao VBA v6) ======================= */
 const TABELA_BASE="ANALITICO", TABELA_TRAT="TRATATIVAS_SITES", ABA_TRAT="TRATATIVAS_SITES",
       ABA_LISTAS="LISTAS_TRATATIVA", ABA_EXPORT="EXPORT_SITES", ABA_EVOL="EVOLUTIVO_SITES";
 const LIMITE=99.6, LIMITE_SLA4H=83.33, TODOS="(Todos)", SEM_OWNER="(sem owner)", SEM_TRAT="Sem tratativa";
@@ -212,13 +210,11 @@ const LISTAS_PADRAO=[
   ["AMIA","Em recuperação","Falha TX FO","Instalação de BB","Normalizado sem intervenção","Recuperado pela HIGHLINE","Retorno de AC","Setor remoto fora","Site fora","Site oscilando"],
   ["Em andamento","Concluído"]];
 
-/* ======================= ESTADO ======================= */
 const B={n:0,day:null,av:null,tec:[],uf:[],cn:[],mun:[],own:[],st:[],erb:[],vis:[]};
 let grp=new Map(), dayIdx=new Map(), datas=[], trat=new Map(), listas=[[],[],[],[]];
 let dSel=0, sitesView=[], siteSel=null;
 const $=id=>document.getElementById(id);
 
-/* ======================= UTILITÁRIOS ======================= */
 const txt=v=>(v===null||v===undefined)?"":String(v).trim();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function diaDe(v){
@@ -237,21 +233,22 @@ function agoraSerial(){const n=new Date();return (n.getTime()-n.getTimezoneOffse
 const f2=x=>isFinite(x)?x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"-";
 const chaveGrupo=(st,tec)=>st.toUpperCase()+"|"+tec.toUpperCase();
 const chaveSite=(d,tec,st)=>d+"|"+tec.toUpperCase()+"|"+st.toUpperCase();
-function chaveCel(d,tec,st,vis,erb){let c=vis.trim().toUpperCase(); if(!c)c="ERB:"+erb.trim().toUpperCase();
-  return ymd(d)+"|"+tec.trim().toUpperCase()+"|"+st.trim().toUpperCase()+"|"+c;}
+/* CHAVE ÚNICA DO REGISTRO = DATA | STATION_NAME | ERB | VISAO_FILTRO */
+function chaveCel(d,st,erb,vis){
+  return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();
+}
 function fill(r,c,v){return Array.from({length:r},()=>Array(c).fill(v));}
 function pillCls(s){if(s===SEM_TRAT)return"p-sem";const u=s.toUpperCase();if(u.startsWith("CONCL"))return"p-con";if(u.includes("ANDAMENTO"))return"p-and";return"p-out";}
 
 function ovl(on,t,p){$("ovl").classList.toggle("hide",!on);if(t)$("ovlTxt").textContent=t;if(p!==undefined)$("ovlBar").style.width=Math.round(p*100)+"%";}
 function toast(tit,msg,tipo){const d=document.createElement("div");d.className="toast "+(tipo||"");
   d.innerHTML="<b>"+esc(tit)+"</b><div style='white-space:pre-line'>"+esc(msg)+"</div>";$("toastBox").appendChild(d);
-  setTimeout(()=>d.remove(),tipo==="err"?9000:5000);}
+  setTimeout(()=>d.remove(),tipo==="err"?9000:6000);}
 function confirmar(tit,msg){return new Promise(res=>{$("mTit").textContent=tit;$("mTxt").textContent=msg;$("modal").classList.remove("hide");
   const fim=v=>{$("modal").classList.add("hide");$("mSim").onclick=null;$("mNao").onclick=null;res(v);};
   $("mSim").onclick=()=>fim(true);$("mNao").onclick=()=>fim(false);});}
 function setStatus(s){$("status").textContent=s;}
 
-/* ======================= OFFICE ======================= */
 Office.onReady(info=>{
   if(info.host!==Office.HostType.Excel){ovl(true,"Abra este painel dentro do Excel.",0);return;}
   $("usuario").value=localStorage.getItem("rnoUsuario")||"";
@@ -269,10 +266,11 @@ async function carregarTudo(){
     const dup=await carregarTratativas(true);
     preencherFiltros();
     ovl(false); aplicarFiltro();
-    if(dup>0) toast("Duplicidades removidas",dup+" linha(s) duplicada(s) removida(s) da aba "+ABA_TRAT+".\nRegra: DATA + TECNOLOGIA + STATION + VISAO_FILTRO (mantida a mais recente).","wrn");
+    if(dup>0) toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (somente desta aba; o ANALITICO não é alterado).\nRegra: DATA + STATION_NAME + ERB + VISAO_FILTRO (mantida a mais recente).","wrn");
   }catch(e){ovl(false);toast("Erro ao carregar",e.message||String(e),"err");setStatus("Erro: "+(e.message||e));}
 }
 
+/* Lê o ANALITICO INTEIRO (somente leitura: nenhuma linha é ignorada ou excluída) */
 async function carregarBase(){
   await Excel.run(async ctx=>{
     const t=ctx.workbook.tables.getItemOrNullObject(TABELA_BASE); await ctx.sync();
@@ -345,7 +343,10 @@ async function garantirTabelaTrat(ctx){
   await ctx.sync(); return t;
 }
 
-/* Lê TRATATIVAS_SITES, preenche CHAVE e (opcional) remove duplicidades */
+/* Chave de uma linha da TRATATIVAS_SITES (colunas: B=DATA, E=Station, F=CELULA/ERB, G=GNODEB/VISAO_FILTRO) */
+const chaveLinhaTrat=row=>chaveCel(diaDe(row[1]),txt(row[4]),txt(row[5]),txt(row[6]));
+
+/* Lê TRATATIVAS_SITES, regrava a CHAVE no padrão novo e remove repetidas DESTA aba */
 async function carregarTratativas(sanear){
   let removidas=0;
   await Excel.run(async ctx=>{
@@ -357,12 +358,13 @@ async function carregarTratativas(sanear){
       for(let r=0;r<n;r++){
         const d=diaDe(v[r][1]), st=txt(v[r][4]);
         if(st&&d>0){
-          const k=chaveCel(d,txt(v[r][12]),st,txt(v[r][6]),txt(v[r][5])); chaves.push([k]);
+          const k=chaveLinhaTrat(v[r]); chaves.push([k]);
           if(mk.has(k)){const r0=mk.get(k); if((+v[r][14]||0)>=(+v[r0][14]||0)){apagar[r0]=true;mk.set(k,r);}else apagar[r]=true;}
           else mk.set(k,r);
-        }else chaves.push([txt(v[r][16])]);
+        }else chaves.push([""]);
       }
       t.columns.getItemAt(16).getDataBodyRange().values=chaves;
+      await ctx.sync();
       for(let r=n-1;r>=0;r--){ if(apagar[r]){ t.rows.getItemAt(r).delete(); removidas++; } }
       await ctx.sync();
     }
@@ -376,7 +378,6 @@ async function carregarTratativas(sanear){
   return removidas;
 }
 
-/* ======================= FILTROS ======================= */
 function opcoes(sel,vals){sel.innerHTML=[TODOS,...vals].map(s=>"<option value=\""+esc(s)+"\">"+esc(s)+"</option>").join("");}
 function preencherFiltros(){
   const U=(arr,own)=>{const s=new Set();for(let i=0;i<B.n;i++){let x=arr[i];if(own&&!x)x=SEM_OWNER;if(x)s.add(x);}return[...s].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));};
@@ -397,7 +398,6 @@ function passa(i,F){
   return true;
 }
 
-/* ======================= LISTA PRINCIPAL ======================= */
 function aplicarFiltro(){
   if(!B.n)return;
   dSel=datas[+$("fData").value||0]; const F=lerFiltros(); const m=new Map();
@@ -433,7 +433,6 @@ function renderSites(){
   $("tbSites").tBodies[0].innerHTML=h.join("")||"<tr><td colspan=\"11\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
 }
 
-/* ======================= DETALHE ======================= */
 function limparDetalhe(){
   siteSel=null; $("tbCel").tBodies[0].innerHTML=""; $("tbHist").tBodies[0].innerHTML="";
   ["tCausa","tTMR","tDesc","tStatus","tObs"].forEach(id=>$(id).value="");
@@ -472,9 +471,10 @@ function mostrarSite(ix){
   }
 }
 
-/* ======================= SALVAR (UPSERT PELA CHAVE) ======================= */
+/* ======================= SALVAR (UPSERT PELA CHAVE DATA|STATION|ERB|VISAO_FILTRO) ======================= */
+let salvando=false;
 async function salvar(){
-  const r=siteSel; if(!r)return;
+  const r=siteSel; if(!r||salvando)return;
   const causa=$("tCausa").value.trim(), tmr=$("tTMR").value.trim(), desc=$("tDesc").value.trim(),
         status=$("tStatus").value.trim(), obs=$("tObs").value.trim();
   if(!causa||!status){toast("Campos obrigatórios","Preencha pelo menos 'Causa Disponibilidade' e 'Status'.","wrn");return;}
@@ -483,29 +483,43 @@ async function salvar(){
   if(!linhas.length){toast("Atenção","Nenhuma célula encontrada para o site na data.","wrn");return;}
   const nAttCel=linhas.filter(i=>!isNaN(B.av[i])&&B.av[i]<=LIMITE).length;
   const jaExistia=trat.has(chaveSite(dSel,r.tec,r.st)); const agora=agoraSerial();
-  let nNovas=0,nAtual=0;
-  $("btnSalvar").disabled=true;
+
+  const porChave=new Map();
+  for(const i of linhas){
+    const a=B.av[i]; if(!(nAttCel===0||(!isNaN(a)&&a<=LIMITE)))continue;
+    const k=chaveCel(dSel,r.st,B.erb[i],B.vis[i]);
+    const cnNum=Number(B.cn[i]);
+    porChave.set(k,[B.own[i],dSel,B.uf[i],(B.cn[i]!==""&&isFinite(cnNum))?cnNum:B.cn[i],r.st,B.erb[i],B.vis[i],isNaN(a)?"":a,
+                   causa,tmr,desc,status,r.tec,obs,agora,usuario,k]);
+  }
+  let nNovas=0,nAtual=0,nLimp=0;
+  salvando=true; $("btnSalvar").disabled=true;
   try{
     await Excel.run(async ctx=>{
       const t=await garantirTabelaTrat(ctx);
       const body=t.getDataBodyRange().load("values"); await ctx.sync();
-      const v=body.values; const idx=new Map();
-      v.forEach((row,ri)=>{let k=txt(row[16]); const st=txt(row[4]);
-        if(!k&&st)k=chaveCel(diaDe(row[1]),txt(row[12]),st,txt(row[6]),txt(row[5])); if(k)idx.set(k.toUpperCase(),ri);});
-      let vazia=(v.length===1&&!txt(v[0][4]));
-      const novas=[];
-      for(const i of linhas){
-        const a=B.av[i]; if(!(nAttCel===0||(!isNaN(a)&&a<=LIMITE)))continue;
-        const k=chaveCel(dSel,r.tec,r.st,B.vis[i],B.erb[i]);
-        const cnNum=Number(B.cn[i]);
-        const arr=[B.own[i],dSel,B.uf[i],(B.cn[i]!==""&&isFinite(cnNum))?cnNum:B.cn[i],r.st,B.erb[i],B.vis[i],isNaN(a)?"":a,
-                   causa,tmr,desc,status,r.tec,obs,agora,usuario,k];
-        if(idx.has(k.toUpperCase())){t.rows.getItemAt(idx.get(k.toUpperCase())).values=[arr];nAtual++;}
-        else if(vazia){t.rows.getItemAt(0).values=[arr];vazia=false;idx.set(k.toUpperCase(),0);nNovas++;}
-        else{novas.push(arr);idx.set(k.toUpperCase(),-1);nNovas++;}
+      const v=body.values;
+      const existe=new Map();
+      v.forEach((row,ri)=>{ if(!txt(row[4]))return; const k=chaveLinhaTrat(row);
+        if(!existe.has(k))existe.set(k,[]); existe.get(k).push(ri);});
+      const vazia=(v.length===1&&!txt(v[0][4]));
+      const apagar=[], novas=[];
+      for(const [k,arr] of porChave){
+        const rs=existe.get(k);
+        if(rs&&rs.length){
+          t.rows.getItemAt(rs[0]).values=[arr]; nAtual++;
+          for(let j=1;j<rs.length;j++){apagar.push(rs[j]);nLimp++;}
+        }else novas.push(arr);
       }
-      if(novas.length)t.rows.add(null,novas);
       await ctx.sync();
+      apagar.sort((a,b)=>b-a);
+      for(const ri of apagar)t.rows.getItemAt(ri).delete();
+      if(apagar.length)await ctx.sync();
+      if(novas.length){
+        if(vazia){t.rows.getItemAt(0).values=[novas.shift()]; nNovas++;}
+        if(novas.length){t.rows.add(null,novas); nNovas+=novas.length;}
+        await ctx.sync();
+      }
       const b2=t.getDataBodyRange().load("rowCount"); await ctx.sync();
       t.columns.getItemAt(1).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"dd/mm/yyyy");
       t.columns.getItemAt(7).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"0.00");
@@ -515,30 +529,33 @@ async function salvar(){
     trat.set(chaveSite(dSel,r.tec,r.st),{causa,tmr,desc,status,obs});
     r.stt=status; const ix=sitesView.indexOf(r); renderSites(); mostrarSite(ix);
     toast(jaExistia?"TRATATIVA ATUALIZADA COM SUCESSO!":"TRATATIVA CADASTRADA COM SUCESSO!",
-          "Site: "+r.st+" ("+r.tec+")\nData: "+fmtD(dSel)+"\nStatus: "+status+"\nCélulas novas: "+nNovas+" | atualizadas: "+nAtual);
+          "Site: "+r.st+" ("+r.tec+")\nData: "+fmtD(dSel)+"\nStatus: "+status+"\nCélulas novas: "+nNovas+" | atualizadas: "+nAtual+
+          (nLimp?"\nRepetidas antigas removidas: "+nLimp:""));
     setStatus("Tratativa gravada em "+TABELA_TRAT+". Salve a pasta (Ctrl+B).");
   }catch(e){toast("Erro ao gravar a tratativa",e.message||String(e),"err");}
-  finally{$("btnSalvar").disabled=!siteSel;}
+  finally{salvando=false;$("btnSalvar").disabled=!siteSel;}
 }
 
-/* ======================= CANCELAR ======================= */
 async function cancelar(){
   const r=siteSel; if(!r)return; const ks=chaveSite(dSel,r.tec,r.st);
   if(!trat.has(ks)){toast("Atenção","Este site não possui tratativa nesta data.","wrn");return;}
   const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa?\n\nSite: "+r.st+" ("+r.tec+")\nData: "+fmtD(dSel)+
-    "\n\nAs linhas deste site/data serão EXCLUÍDAS da aba "+ABA_TRAT+".");
+    "\n\nAs linhas deste site/data serão EXCLUÍDAS da aba "+ABA_TRAT+" (o ANALITICO não é alterado).");
   if(!ok)return; let nDel=0;
   try{
     await Excel.run(async ctx=>{
       const t=await garantirTabelaTrat(ctx); const body=t.getDataBodyRange().load("values"); await ctx.sync();
-      const v=body.values;
-      for(let i=v.length-1;i>=0;i--){
-        if(diaDe(v[i][1])===dSel&&txt(v[i][4]).toUpperCase()===r.st.toUpperCase()&&txt(v[i][12]).toUpperCase()===r.tec.toUpperCase()){
-          if(v.length-nDel===1){t.getDataBodyRange().clear(Excel.ClearApplyTo.contents);}else{t.rows.getItemAt(i).delete();}
-          nDel++;
-        }
+      const v=body.values; const alvo=[];
+      for(let i=0;i<v.length;i++){
+        if(diaDe(v[i][1])===dSel&&txt(v[i][4]).toUpperCase()===r.st.toUpperCase()&&txt(v[i][12]).toUpperCase()===r.tec.toUpperCase())alvo.push(i);
       }
-      await ctx.sync();
+      if(alvo.length&&alvo.length===v.length){
+        for(let j=alvo.length-1;j>=1;j--)t.rows.getItemAt(alvo[j]).delete();
+        t.getDataBodyRange().clear(Excel.ClearApplyTo.contents);
+      }else{
+        for(let j=alvo.length-1;j>=0;j--)t.rows.getItemAt(alvo[j]).delete();
+      }
+      nDel=alvo.length; await ctx.sync();
     });
     trat.delete(ks); r.stt=SEM_TRAT; const ix=sitesView.indexOf(r); renderSites(); mostrarSite(ix);
     toast("TRATATIVA CANCELADA COM SUCESSO!","Site: "+r.st+" ("+r.tec+")\nLinhas excluídas: "+nDel);
@@ -546,7 +563,6 @@ async function cancelar(){
   }catch(e){toast("Erro ao cancelar a tratativa",e.message||String(e),"err");}
 }
 
-/* ======================= EXPORTAR ======================= */
 async function prepararAba(ctx,nome){
   let ws=ctx.workbook.worksheets.getItemOrNullObject(nome); await ctx.sync();
   if(ws.isNullObject){ws=ctx.workbook.worksheets.add(nome);}
@@ -574,7 +590,6 @@ async function exportar(){
   }catch(e){toast("Erro ao exportar",e.message||String(e),"err");}
 }
 
-/* ======================= EVOLUTIVO ======================= */
 let evol=null;
 function calcEvolutivo(){
   const x=serialToDate(dSel); const y=x.getUTCFullYear(), mo=x.getUTCMonth();
@@ -650,7 +665,6 @@ async function evolExcel(){
   }catch(e){toast("Erro ao gerar o evolutivo",e.message||String(e),"err");}
 }
 
-/* ======================= EVENTOS ======================= */
 function ligarEventos(){
   ["fData","fTec","fUF","fCN","fMun","fOwn","fStat","fAtt"].forEach(id=>$(id).addEventListener("change",aplicarFiltro));
   $("fBusca").addEventListener("input",()=>{const n=$("fBusca").value.trim().length;if(n===0||n>=3)aplicarFiltro();});
