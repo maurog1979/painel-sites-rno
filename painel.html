@@ -5,18 +5,17 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Sites RNO</title>
-<!-- v3: CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO lido 100% (nenhuma linha ignorada/excluída) -->
+<!-- v4: TRATATIVA POR SETOR — 1) Site  2) Setor (VISAO_FILTRO) da data  3) Tratativa
+     CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO somente leitura -->
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
-:root{
-  --red:#E60000;--red2:#B71C1C;--green:#00964A;--green2:#548235;--orange:#E67800;
-  --bg:#F4F5F7;--card:#FFFFFF;--txt:#1F2328;--muted:#6B7280;--line:#E3E5E8;--sel:#FDECEC;
-}
+:root{--red:#E60000;--red2:#B71C1C;--green:#00964A;--green2:#548235;--orange:#E67800;
+  --bg:#F4F5F7;--card:#FFFFFF;--txt:#1F2328;--muted:#6B7280;--line:#E3E5E8;--sel:#FDECEC;}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",Arial,sans-serif;font-size:13px}
 button,select,input,textarea{font-family:inherit;font-size:13px}
 .hdr{background:linear-gradient(90deg,var(--red),var(--red2));color:#fff;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.hdr h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.3px;flex:1;min-width:220px}
+.hdr h1{font-size:15px;margin:0;font-weight:700;flex:1;min-width:220px}
 .hdr .sub{font-size:11px;opacity:.9;font-weight:400;display:block}
 .tabs{display:flex;gap:4px}
 .tab{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600}
@@ -27,66 +26,61 @@ button,select,input,textarea{font-family:inherit;font-size:13px}
 .wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
-.f label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+.f label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase}
 .f select,.f input{width:100%;padding:6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff}
-.f select:focus,.f input:focus,textarea:focus{outline:2px solid var(--red);outline-offset:0;border-color:var(--red)}
+.f select:focus,.f input:focus,textarea:focus,.form input:focus{outline:2px solid var(--red);border-color:var(--red)}
 .chk{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12px;padding-bottom:6px}
-.btn{border:none;border-radius:7px;padding:8px 14px;font-weight:700;cursor:pointer;transition:filter .15s}
-.btn:hover{filter:brightness(1.08)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.b-red{background:var(--red);color:#fff}
-.b-org{background:var(--orange);color:#fff}
-.b-grn{background:var(--green2);color:#fff}
-.b-gry{background:#E9EBEE;color:#222}
+.btn{border:none;border-radius:7px;padding:8px 14px;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(1.08)} .btn:disabled{opacity:.45;cursor:not-allowed}
+.b-red{background:var(--red);color:#fff} .b-org{background:var(--orange);color:#fff}
+.b-grn{background:var(--green2);color:#fff} .b-gry{background:#E9EBEE;color:#222}
 .b-out{background:#fff;color:var(--red2);border:1px solid var(--red2)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .kpi{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--red);border-radius:10px;padding:8px 12px}
 .kpi .v{font-size:22px;font-weight:800;line-height:1.1}
 .kpi .l{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase}
 .kpi.g{border-left-color:var(--green)} .kpi.o{border-left-color:var(--orange)} .kpi.k{border-left-color:#555}
-.ttl{font-weight:800;font-size:12px;color:var(--red2);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
+.ttl{font-weight:800;font-size:12px;color:var(--red2);text-transform:uppercase;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.num{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;align-items:center;justify-content:center;font-size:11px}
 .tblw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
 table{border-collapse:collapse;width:100%}
 th{position:sticky;top:0;background:var(--red2);color:#fff;font-size:11px;text-transform:uppercase;text-align:left;padding:6px 8px;white-space:nowrap;z-index:2}
 td{padding:5px 8px;border-bottom:1px solid #F0F1F3;white-space:nowrap}
 td.n,th.n{text-align:right}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:#FAFAFA}
+tbody tr.clk{cursor:pointer} tbody tr.clk:hover{background:#FAFAFA}
 tbody tr.sel{background:var(--sel);box-shadow:inset 4px 0 0 var(--red)}
 .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
-.p-sem{background:#FDE2E2;color:#B71C1C}
-.p-and{background:#FFF0D9;color:#9A5200}
-.p-con{background:#DDF5E6;color:#0B6B33}
-.p-out{background:#E8EAED;color:#333}
-.av-r{color:var(--red);font-weight:700}
-.av-g{color:var(--green);font-weight:700}
-.grid2{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:10px}
+.p-sem{background:#FDE2E2;color:#B71C1C} .p-and{background:#FFF0D9;color:#9A5200}
+.p-con{background:#DDF5E6;color:#0B6B33} .p-out{background:#E8EAED;color:#555}
+.av-r{color:var(--red);font-weight:700} .av-g{color:var(--green);font-weight:700}
+.grid2{display:grid;grid-template-columns:1.25fr .8fr 1.25fr;gap:10px}
 @media (max-width:1100px){.grid2{grid-template-columns:1fr 1fr}}
 @media (max-width:700px){.grid2{grid-template-columns:1fr}}
-.sitehdr{font-weight:700;margin-bottom:8px;padding:6px 10px;border-radius:6px;background:#F7F7F8}
+.sitehdr{font-weight:700;margin-bottom:8px;padding:6px 10px;border-radius:6px;background:#F7F7F8;font-size:12px}
 .sitehdr.edit{background:#FFF3E0;color:#9A5200;border:1px solid #F5C27A}
+.sitehdr.ok{background:#FDECEC;color:#B71C1C;border:1px solid #F3B5B5}
 .form .row{margin-bottom:7px}
 .form label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
-.form input,.form select,textarea{width:100%;padding:6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff}
+.form input,textarea{width:100%;padding:6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff}
+.form.off input,.form.off textarea{background:#F3F4F6}
 textarea{min-height:56px;resize:vertical}
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .status{font-size:12px;color:var(--muted);padding:2px 2px 10px}
 .hide{display:none!important}
-.toast{position:fixed;right:16px;bottom:16px;z-index:100;max-width:380px;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);border-left:6px solid var(--green);padding:12px 14px;animation:up .25s ease}
+.key{font-family:Consolas,monospace;font-size:11px;color:#555;word-break:break-all}
+.toast{position:fixed;right:16px;bottom:16px;z-index:100;max-width:380px;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);border-left:6px solid var(--green);padding:12px 14px}
 .toast.err{border-left-color:var(--red)} .toast.wrn{border-left-color:var(--orange)}
 .toast b{display:block;margin-bottom:4px;font-size:14px}
-@keyframes up{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
 .ovl{position:fixed;inset:0;background:rgba(255,255,255,.92);z-index:90;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .bar{width:min(420px,80%);height:10px;background:#EEE;border-radius:6px;overflow:hidden}
 .bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--red2));transition:width .2s}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:95;display:flex;align-items:center;justify-content:center}
-.modal .box{background:#fff;border-radius:12px;padding:18px 20px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal .box{background:#fff;border-radius:12px;padding:18px 20px;max-width:420px;width:90%}
 .modal .box h3{margin:0 0 8px;color:var(--red2)}
 .heat td.c{text-align:center;font-weight:600;font-size:11px;padding:4px 3px;min-width:42px;color:#fff}
 .heat td.cr{background:var(--red)} .heat td.cg{background:var(--green)} .heat td.ce{background:#fff;color:#bbb}
 .heat td.st{position:sticky;left:0;background:#E2EFDA;font-weight:700;z-index:1}
-.heat th{background:var(--green2)}
-.heat th.st{left:0;z-index:3}
+.heat th{background:var(--green2)} .heat th.st{left:0;z-index:3}
 .legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px}
 .sq{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
 </style>
@@ -94,17 +88,17 @@ textarea{min-height:56px;resize:vertical}
 <body>
 <div class="hdr">
   <h1>PAINEL DE DISPONIBILIDADE — SITES QUE MERECEM ATENÇÃO (AVAIL ≤ 99,60)
-    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · mesmas tabelas do painel VBA</span></h1>
+    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · tratativa por SETOR · mesmas tabelas do painel VBA</span></h1>
   <div class="tabs">
     <button type="button" class="tab on" id="tabTrat">Tratativa</button>
     <button type="button" class="tab" id="tabEvol">Evolutivo diário</button>
   </div>
   <div class="usr"><label for="usuario">Usuário</label><input id="usuario" maxlength="40"></div>
-  <button type="button" class="btnRel" id="btnRecarregar" title="Relê ANALITICO e TRATATIVAS_SITES">⟳ Recarregar base</button>
+  <button type="button" class="btnRel" id="btnRecarregar">⟳ Recarregar base</button>
 </div>
 
 <div class="wrap">
-  <div class="card filters" id="filtros">
+  <div class="card filters">
     <div class="f"><label for="fData">Data</label><select id="fData"></select></div>
     <div class="f"><label for="fTec">Tecnologia</label><select id="fTec"></select></div>
     <div class="f"><label for="fUF">UF</label><select id="fUF"></select></div>
@@ -112,7 +106,7 @@ textarea{min-height:56px;resize:vertical}
     <div class="f"><label for="fMun">Município</label><select id="fMun"></select></div>
     <div class="f"><label for="fOwn">Cell Owner</label><select id="fOwn"></select></div>
     <div class="f"><label for="fBusca">Buscar Station</label><input id="fBusca" placeholder="3+ letras"></div>
-    <div class="f"><label for="fStat">Tratativa</label><select id="fStat"></select></div>
+    <div class="f"><label for="fStat">Tratativa do site</label><select id="fStat"></select></div>
     <div class="chk"><input type="checkbox" id="fAtt" checked><label for="fAtt">Só ≤ 99,60</label></div>
     <div><button type="button" class="btn b-gry" id="btnLimpar" style="width:100%">Limpar</button></div>
   </div>
@@ -120,48 +114,51 @@ textarea{min-height:56px;resize:vertical}
   <div id="pgTrat">
     <div class="kpis">
       <div class="kpi k"><div class="v" id="kList">0</div><div class="l">Sites listados</div></div>
-      <div class="kpi"><div class="v" id="kAtt">0</div><div class="l">Sites com células ≤ 99,60</div></div>
+      <div class="kpi"><div class="v" id="kAtt">0</div><div class="l">Sites com setores ≤ 99,60</div></div>
       <div class="kpi o"><div class="v" id="kSem">0</div><div class="l">Em atenção SEM tratativa</div></div>
-      <div class="kpi g"><div class="v" id="kCom">0</div><div class="l">Com tratativa</div></div>
+      <div class="kpi g"><div class="v" id="kSet">0</div><div class="l">Setores tratados na data</div></div>
     </div>
 
     <div class="card" style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <p class="ttl" id="ttlSites">Sites</p>
-        <button type="button" class="btn b-out" id="btnExportar">Exportar lista para o Excel</button>
+        <p class="ttl"><span class="num">1</span><span id="ttlSites">Selecione o SITE</span></p>
+        <button type="button" class="btn b-out" id="btnExportar">Exportar setores para o Excel</button>
       </div>
-      <div class="tblw" style="max-height:320px">
+      <div class="tblw" style="max-height:300px">
         <table id="tbSites"><thead><tr>
           <th>Station</th><th>Tec</th><th>UF</th><th>CN</th><th>Município</th><th>Cell Owner</th>
-          <th class="n">Avail mín</th><th class="n">Avail méd</th><th class="n">Cél.</th><th class="n">Cél. ≤99,6</th><th>Tratativa</th>
+          <th class="n">Avail mín</th><th class="n">Avail méd</th><th class="n">Setores</th><th class="n">Set. ≤99,6</th><th>Tratativa</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
 
     <div class="grid2" style="margin-top:10px">
       <div class="card">
-        <p class="ttl">Células do site na data</p>
-        <div class="tblw" style="max-height:300px">
-          <table id="tbCel"><thead><tr><th>Célula (ERB)</th><th>GNODEB / VISAO_FILTRO</th><th class="n">Avail</th></tr></thead><tbody></tbody></table>
+        <p class="ttl"><span class="num">2</span>Selecione o SETOR (somente a data escolhida)</p>
+        <div class="sitehdr" id="siteHdr">Selecione um site no quadro 1.</div>
+        <div class="tblw" style="max-height:290px">
+          <table id="tbCel"><thead><tr><th>Célula (ERB)</th><th>Setor (VISAO_FILTRO)</th><th class="n">Avail</th><th>Tratativa</th></tr></thead><tbody></tbody></table>
         </div>
       </div>
       <div class="card">
-        <p class="ttl">Histórico (últimos 30 dias)</p>
-        <div class="tblw" style="max-height:300px">
+        <p class="ttl">Histórico do site (30 dias)</p>
+        <div class="tblw" style="max-height:330px">
           <table id="tbHist"><thead><tr><th>Data</th><th class="n">Mín</th><th class="n">Méd</th><th class="n">≤99,6</th></tr></thead><tbody></tbody></table>
         </div>
       </div>
-      <div class="card form">
-        <div class="sitehdr" id="siteHdr">Selecione um site na lista para ver células, histórico e registrar a tratativa.</div>
-        <div class="row"><label for="tCausa">Causa Disponibilidade</label><input id="tCausa" list="lCausa"><datalist id="lCausa"></datalist></div>
-        <div class="row"><label for="tTMR">Causa TMR</label><input id="tTMR" list="lTMR"><datalist id="lTMR"></datalist></div>
-        <div class="row"><label for="tDesc">Descrição da Falha</label><input id="tDesc" list="lDesc"><datalist id="lDesc"></datalist></div>
-        <div class="row"><label for="tStatus">Status</label><input id="tStatus" list="lStatus"><datalist id="lStatus"></datalist></div>
-        <div class="row"><label for="tObs">Observação</label><textarea id="tObs"></textarea></div>
+      <div class="card form off" id="formTrat">
+        <p class="ttl"><span class="num">3</span>Tratativa do setor</p>
+        <div class="sitehdr" id="setorHdr">Selecione o site (1) e o setor (2).</div>
+        <div class="row"><label for="tCausa">Causa Disponibilidade</label><input id="tCausa" list="lCausa" disabled><datalist id="lCausa"></datalist></div>
+        <div class="row"><label for="tTMR">Causa TMR</label><input id="tTMR" list="lTMR" disabled><datalist id="lTMR"></datalist></div>
+        <div class="row"><label for="tDesc">Descrição da Falha</label><input id="tDesc" list="lDesc" disabled><datalist id="lDesc"></datalist></div>
+        <div class="row"><label for="tStatus">Status</label><input id="tStatus" list="lStatus" disabled><datalist id="lStatus"></datalist></div>
+        <div class="row"><label for="tObs">Observação</label><textarea id="tObs" disabled></textarea></div>
         <div class="acts">
           <button type="button" class="btn b-red" id="btnSalvar" disabled>Salvar tratativa</button>
           <button type="button" class="btn b-out" id="btnCancelar" disabled>Cancelar tratativa</button>
         </div>
+        <div class="key" id="chaveTxt" style="margin-top:6px"></div>
       </div>
     </div>
   </div>
@@ -174,16 +171,12 @@ textarea{min-height:56px;resize:vertical}
           <div class="legend">
             <span><span class="sq" style="background:var(--red)"></span>≤ 99,60</span>
             <span><span class="sq" style="background:var(--green)"></span>&gt; 99,60</span>
-            <label>Valor do dia:
-              <select id="eMetr"><option value="MEDIA">Média das células</option><option value="MIN">Pior célula</option></select>
-            </label>
+            <label>Valor do dia: <select id="eMetr"><option value="MEDIA">Média dos setores</option><option value="MIN">Pior setor</option></select></label>
           </div>
         </div>
         <button type="button" class="btn b-grn" id="btnEvolExcel">Gerar aba EVOLUTIVO_SITES no Excel</button>
       </div>
-      <div class="tblw heat" style="max-height:70vh;margin-top:8px">
-        <table id="tbEvol"><thead></thead><tbody></tbody></table>
-      </div>
+      <div class="tblw heat" style="max-height:70vh;margin-top:8px"><table id="tbEvol"><thead></thead><tbody></tbody></table></div>
     </div>
   </div>
 
@@ -197,10 +190,11 @@ textarea{min-height:56px;resize:vertical}
 
 <script>
 "use strict";
-const TABELA_BASE="ANALITICO", TABELA_TRAT="TRATATIVAS_SITES", ABA_TRAT="TRATATIVAS_SITES",
-      ABA_LISTAS="LISTAS_TRATATIVA", ABA_EXPORT="EXPORT_SITES", ABA_EVOL="EVOLUTIVO_SITES";
-const LIMITE=99.6, LIMITE_SLA4H=83.33, TODOS="(Todos)", SEM_OWNER="(sem owner)", SEM_TRAT="Sem tratativa";
-const MAX_HIST=30, CHUNK=60000;
+const TABELA_BASE="ANALITICO",TABELA_TRAT="TRATATIVAS_SITES",ABA_TRAT="TRATATIVAS_SITES",
+      ABA_LISTAS="LISTAS_TRATATIVA",ABA_EXPORT="EXPORT_SITES",ABA_EVOL="EVOLUTIVO_SITES";
+const LIMITE=99.6,LIMITE_SLA4H=83.33,TODOS="(Todos)",SEM_OWNER="(sem owner)",SEM_TRAT="Sem tratativa",
+      ST_PARCIAL="Parcial",ST_TRATADO="Tratado";
+const MAX_HIST=30,CHUNK=60000;
 const CAB_TRAT=["CELL OWNER","DATA","UF","CN","Station","CELULA","GNODEB","AVAIL","Causa Disponibilidade","Causa TMR",
                 "Descrição da Falha","Status","TECNOLOGIA","Observação","Atualizado em","Usuário","CHAVE"];
 const NCOL_TRAT=17;
@@ -211,34 +205,33 @@ const LISTAS_PADRAO=[
   ["Em andamento","Concluído"]];
 
 const B={n:0,day:null,av:null,tec:[],uf:[],cn:[],mun:[],own:[],st:[],erb:[],vis:[]};
-let grp=new Map(), dayIdx=new Map(), datas=[], trat=new Map(), listas=[[],[],[],[]];
-let dSel=0, sitesView=[], siteSel=null;
+let grp=new Map(),dayIdx=new Map(),datas=[],trat=new Map(),listas=[[],[],[],[]];
+let dSel=0,sitesView=[],siteSel=null,setorSel=-1;
 const $=id=>document.getElementById(id);
 
 const txt=v=>(v===null||v===undefined)?"":String(v).trim();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function diaDe(v){
-  if(v===null||v===undefined||v==="")return 0;
-  if(typeof v==="number")return Math.floor(v);
-  const s=String(v).trim(); const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(m){return Math.floor((Date.UTC(+m[3],+m[2]-1,+m[1])-Date.UTC(1899,11,30))/86400000);}
-  const n=Number(s.replace(",","."));return isFinite(n)?Math.floor(n):0;
-}
-function numDe(v){ if(typeof v==="number")return v; const s=txt(v); if(!s||s.toLowerCase()==="null")return NaN;
-  let n=Number(s); if(isFinite(n))return n; n=Number(s.replace(",",".")); return isFinite(n)?n:NaN; }
+function diaDe(v){if(v===null||v===undefined||v==="")return 0;if(typeof v==="number")return Math.floor(v);
+  const s=String(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m)return Math.floor((Date.UTC(+m[3],+m[2]-1,+m[1])-Date.UTC(1899,11,30))/86400000);
+  const n=Number(s.replace(",","."));return isFinite(n)?Math.floor(n):0;}
+function numDe(v){if(typeof v==="number")return v;const s=txt(v);if(!s||s.toLowerCase()==="null")return NaN;
+  let n=Number(s);if(isFinite(n))return n;n=Number(s.replace(",","."));return isFinite(n)?n:NaN;}
 function serialToDate(d){return new Date(Date.UTC(1899,11,30)+d*86400000);}
 function fmtD(d){const x=serialToDate(d);return String(x.getUTCDate()).padStart(2,"0")+"/"+String(x.getUTCMonth()+1).padStart(2,"0")+"/"+x.getUTCFullYear();}
 function ymd(d){const x=serialToDate(d);return x.getUTCFullYear()+String(x.getUTCMonth()+1).padStart(2,"0")+String(x.getUTCDate()).padStart(2,"0");}
 function agoraSerial(){const n=new Date();return (n.getTime()-n.getTimezoneOffset()*60000)/86400000+25569;}
 const f2=x=>isFinite(x)?x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"-";
 const chaveGrupo=(st,tec)=>st.toUpperCase()+"|"+tec.toUpperCase();
-const chaveSite=(d,tec,st)=>d+"|"+tec.toUpperCase()+"|"+st.toUpperCase();
-/* CHAVE ÚNICA DO REGISTRO = DATA | STATION_NAME | ERB | VISAO_FILTRO */
-function chaveCel(d,st,erb,vis){
-  return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();
-}
+/* CHAVE ÚNICA = DATA | STATION_NAME | ERB | VISAO_FILTRO */
+function chaveCel(d,st,erb,vis){if(!(d>0))return"";return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();}
+const chaveLinha=i=>chaveCel(B.day[i],B.st[i],B.erb[i],B.vis[i]);
+const chaveLinhaTrat=row=>chaveCel(diaDe(row[1]),txt(row[4]),txt(row[5]),txt(row[6]));
 function fill(r,c,v){return Array.from({length:r},()=>Array(c).fill(v));}
-function pillCls(s){if(s===SEM_TRAT)return"p-sem";const u=s.toUpperCase();if(u.startsWith("CONCL"))return"p-con";if(u.includes("ANDAMENTO"))return"p-and";return"p-out";}
+function pillCls(s){if(!s||s==="-")return"p-out";if(s.startsWith(SEM_TRAT))return"p-sem";const u=s.toUpperCase();
+  if(u.startsWith("TRATADO")||u.startsWith("CONCL"))return"p-con";return"p-and";}
+function statusSite(att,tA,tT){if(tT===0)return SEM_TRAT;if(att===0)return ST_TRATADO+" ("+tT+")";
+  return(tA>=att?ST_TRATADO:ST_PARCIAL)+" "+tA+"/"+att;}
 
 function ovl(on,t,p){$("ovl").classList.toggle("hide",!on);if(t)$("ovlTxt").textContent=t;if(p!==undefined)$("ovlBar").style.width=Math.round(p*100)+"%";}
 function toast(tit,msg,tipo){const d=document.createElement("div");d.className="toast "+(tipo||"");
@@ -254,7 +247,7 @@ Office.onReady(info=>{
   $("usuario").value=localStorage.getItem("rnoUsuario")||"";
   $("usuario").addEventListener("change",()=>localStorage.setItem("rnoUsuario",$("usuario").value.trim()));
   try{Office.context.document.settings.set("Office.AutoShowTaskpaneWithDocument",true);Office.context.document.settings.saveAsync();}catch(e){}
-  ligarEventos(); carregarTudo();
+  ligarEventos();carregarTudo();
 });
 
 async function carregarTudo(){
@@ -264,115 +257,106 @@ async function carregarTudo(){
     ovl(true,"Lendo listas e tratativas…",0.97);
     await carregarListas();
     const dup=await carregarTratativas(true);
-    preencherFiltros();
-    ovl(false); aplicarFiltro();
-    if(dup>0) toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (somente desta aba; o ANALITICO não é alterado).\nRegra: DATA + STATION_NAME + ERB + VISAO_FILTRO (mantida a mais recente).","wrn");
+    preencherFiltros();ovl(false);aplicarFiltro();
+    if(dup>0)toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (o ANALITICO não é alterado).\nRegra: DATA + STATION_NAME + ERB + VISAO_FILTRO.","wrn");
   }catch(e){ovl(false);toast("Erro ao carregar",e.message||String(e),"err");setStatus("Erro: "+(e.message||e));}
 }
 
-/* Lê o ANALITICO INTEIRO (somente leitura: nenhuma linha é ignorada ou excluída) */
 async function carregarBase(){
   await Excel.run(async ctx=>{
-    const t=ctx.workbook.tables.getItemOrNullObject(TABELA_BASE); await ctx.sync();
-    if(t.isNullObject) throw new Error("Tabela '"+TABELA_BASE+"' não encontrada. Carregue a consulta ANALITICO como Tabela numa planilha.");
-    const hdr=t.getHeaderRowRange().load("values"); const body=t.getDataBodyRange().load("rowIndex,columnIndex,rowCount");
-    const ws=t.worksheet; await ctx.sync();
+    const t=ctx.workbook.tables.getItemOrNullObject(TABELA_BASE);await ctx.sync();
+    if(t.isNullObject)throw new Error("Tabela '"+TABELA_BASE+"' não encontrada.");
+    const hdr=t.getHeaderRowRange().load("values");const body=t.getDataBodyRange().load("rowIndex,columnIndex,rowCount");
+    const ws=t.worksheet;await ctx.sync();
     const H=hdr.values[0].map(h=>txt(h).toUpperCase());
     const need={DATA:"DATA",TECNOLOGIA:"tec",UF:"uf",CN:"cn",MUNICIPIO:"mun","CELL OWNER":"own",STATION_NAME:"st",ERB:"erb",VISAO_FILTRO:"vis",AVAIL:"AVAIL"};
     const falt=Object.keys(need).filter(k=>H.indexOf(k)<0);
-    if(falt.length) throw new Error("Colunas não encontradas no ANALITICO: "+falt.join(", "));
-    const n=body.rowCount; B.n=n; B.day=new Int32Array(n); B.av=new Float64Array(n).fill(NaN);
-    const keys=Object.keys(need); const total=keys.length*Math.ceil(n/CHUNK); let feito=0;
+    if(falt.length)throw new Error("Colunas não encontradas no ANALITICO: "+falt.join(", "));
+    const n=body.rowCount;B.n=n;B.day=new Int32Array(n);B.av=new Float64Array(n).fill(NaN);
+    const keys=Object.keys(need);const total=keys.length*Math.ceil(n/CHUNK);let feito=0;
     for(const k of keys){
-      const ci=H.indexOf(k), dest=need[k]; const pool=new Map();
-      if(dest!=="DATA"&&dest!=="AVAIL") B[dest]=new Array(n);
+      const ci=H.indexOf(k),dest=need[k];const pool=new Map();
+      if(dest!=="DATA"&&dest!=="AVAIL")B[dest]=new Array(n);
       for(let off=0;off<n;off+=CHUNK){
         const q=Math.min(CHUNK,n-off);
-        const r=ws.getRangeByIndexes(body.rowIndex+off,body.columnIndex+ci,q,1).load("values"); await ctx.sync();
+        const r=ws.getRangeByIndexes(body.rowIndex+off,body.columnIndex+ci,q,1).load("values");await ctx.sync();
         const v=r.values;
         if(dest==="DATA"){for(let i=0;i<q;i++)B.day[off+i]=diaDe(v[i][0]);}
         else if(dest==="AVAIL"){for(let i=0;i<q;i++){const x=v[i][0];if(x!==""&&x!==null){const y=numDe(x);if(isFinite(y))B.av[off+i]=y;}}}
-        else{const arr=B[dest];for(let i=0;i<q;i++){let s=txt(v[i][0]);let p=pool.get(s);if(p===undefined){pool.set(s,s);p=s;}arr[off+i]=p;}}
-        feito++; ovl(true,"Lendo ANALITICO: "+k+" ("+Math.min(off+q,n).toLocaleString("pt-BR")+" / "+n.toLocaleString("pt-BR")+")",feito/total*0.95);
+        else{const arr=B[dest];for(let i=0;i<q;i++){const s=txt(v[i][0]);let p=pool.get(s);if(p===undefined){pool.set(s,s);p=s;}arr[off+i]=p;}}
+        feito++;ovl(true,"Lendo ANALITICO: "+k+" ("+Math.min(off+q,n).toLocaleString("pt-BR")+" / "+n.toLocaleString("pt-BR")+")",feito/total*0.95);
       }
     }
   });
-  grp=new Map(); dayIdx=new Map();
+  grp=new Map();dayIdx=new Map();
   for(let i=0;i<B.n;i++){
-    const k=chaveGrupo(B.st[i],B.tec[i]); let a=grp.get(k); if(!a){a=[];grp.set(k,a);} a.push(i);
-    const d=B.day[i]; if(d>0){let b=dayIdx.get(d); if(!b){b=[];dayIdx.set(d,b);} b.push(i);}
+    const k=chaveGrupo(B.st[i],B.tec[i]);let a=grp.get(k);if(!a){a=[];grp.set(k,a);}a.push(i);
+    const d=B.day[i];if(d>0){let b=dayIdx.get(d);if(!b){b=[];dayIdx.set(d,b);}b.push(i);}
   }
   datas=[...dayIdx.keys()].sort((a,b)=>b-a);
-  if(!datas.length) throw new Error("A coluna DATA do ANALITICO não possui datas válidas.");
+  if(!datas.length)throw new Error("A coluna DATA do ANALITICO não possui datas válidas.");
 }
 
 async function carregarListas(){
   await Excel.run(async ctx=>{
-    let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_LISTAS); await ctx.sync();
+    let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_LISTAS);await ctx.sync();
     if(ws.isNullObject){
       ws=ctx.workbook.worksheets.add(ABA_LISTAS);
       ws.getRange("A1:D1").values=[["Causa Disponibilidade","Causa TMR","Descrição da Falha","Status"]];
       LISTAS_PADRAO.forEach((l,c)=>{ws.getRangeByIndexes(1,c,l.length,1).values=l.map(x=>[x]);});
-      const h=ws.getRange("A1:D1");h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
-      ws.getRange("A:D").format.columnWidth=200; await ctx.sync();
+      const h=ws.getRange("A1:D1");h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;await ctx.sync();
     }
-    const u=ws.getUsedRange().load("values"); await ctx.sync();
+    const u=ws.getUsedRange().load("values");await ctx.sync();
     listas=[[],[],[],[]];
     for(let c=0;c<4;c++){for(let r=1;r<u.values.length;r++){const s=txt(u.values[r][c]);if(!s)break;listas[c].push(s);}}
   });
   [["lCausa",0],["lTMR",1],["lDesc",2],["lStatus",3]].forEach(([id,c])=>{$(id).innerHTML=listas[c].map(s=>"<option value=\""+esc(s)+"\">").join("");});
-  const fs=$("fStat"); fs.innerHTML=[TODOS,SEM_TRAT,...listas[3]].map(s=>"<option>"+esc(s)+"</option>").join("");
+  $("fStat").innerHTML=[TODOS,SEM_TRAT,ST_PARCIAL,ST_TRATADO].map(s=>"<option>"+esc(s)+"</option>").join("");
 }
 
 async function garantirTabelaTrat(ctx){
-  let t=ctx.workbook.tables.getItemOrNullObject(TABELA_TRAT); await ctx.sync();
+  let t=ctx.workbook.tables.getItemOrNullObject(TABELA_TRAT);await ctx.sync();
   if(!t.isNullObject){
-    const cols=t.columns.load("count"); await ctx.sync();
-    for(let c=cols.count;c<NCOL_TRAT;c++){ t.columns.add(null,null,CAB_TRAT[c]); }
-    if(cols.count<NCOL_TRAT){const h=t.getHeaderRowRange();h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;await ctx.sync();}
+    const cols=t.columns.load("count");await ctx.sync();
+    for(let c=cols.count;c<NCOL_TRAT;c++)t.columns.add(null,null,CAB_TRAT[c]);
+    if(cols.count<NCOL_TRAT)await ctx.sync();
     return t;
   }
-  let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_TRAT); await ctx.sync();
-  if(ws.isNullObject){ws=ctx.workbook.worksheets.add(ABA_TRAT);}
+  let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_TRAT);await ctx.sync();
+  if(ws.isNullObject)ws=ctx.workbook.worksheets.add(ABA_TRAT);
   else{const u=ws.getUsedRangeOrNullObject(true);await ctx.sync();
-    if(!u.isNullObject) throw new Error("A aba '"+ABA_TRAT+"' tem dados mas não tem a tabela '"+TABELA_TRAT+"'. Renomeie a tabela ou a aba.");}
+    if(!u.isNullObject)throw new Error("A aba '"+ABA_TRAT+"' tem dados mas não tem a tabela '"+TABELA_TRAT+"'.");}
   ws.getRange("A1:Q1").values=[CAB_TRAT];
-  t=ws.tables.add(ABA_TRAT+"!A1:Q2",true); t.name=TABELA_TRAT;
+  t=ws.tables.add(ABA_TRAT+"!A1:Q2",true);t.name=TABELA_TRAT;
   const h=t.getHeaderRowRange();h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
-  ws.getRange("A:Q").format.columnWidth=110; ws.getRange("A:A").format.columnWidth=200; ws.getRange("Q:Q").format.columnWidth=280;
-  await ctx.sync(); return t;
+  await ctx.sync();return t;
 }
 
-/* Chave de uma linha da TRATATIVAS_SITES (colunas: B=DATA, E=Station, F=CELULA/ERB, G=GNODEB/VISAO_FILTRO) */
-const chaveLinhaTrat=row=>chaveCel(diaDe(row[1]),txt(row[4]),txt(row[5]),txt(row[6]));
-
-/* Lê TRATATIVAS_SITES, regrava a CHAVE no padrão novo e remove repetidas DESTA aba */
+/* Tratativas POR SETOR: trat = CHAVE -> {causa,tmr,desc,status,obs} */
 async function carregarTratativas(sanear){
   let removidas=0;
   await Excel.run(async ctx=>{
     const t=await garantirTabelaTrat(ctx);
-    const body=t.getDataBodyRange().load("values,rowCount"); await ctx.sync();
-    const v=body.values; const n=v.length;
+    const body=t.getDataBodyRange().load("values");await ctx.sync();
+    const v=body.values,n=v.length;
     if(sanear&&n>0){
-      const chaves=[], apagar=new Array(n).fill(false), mk=new Map();
+      const chaves=[],apagar=new Array(n).fill(false),mk=new Map();
       for(let r=0;r<n;r++){
-        const d=diaDe(v[r][1]), st=txt(v[r][4]);
-        if(st&&d>0){
-          const k=chaveLinhaTrat(v[r]); chaves.push([k]);
-          if(mk.has(k)){const r0=mk.get(k); if((+v[r][14]||0)>=(+v[r0][14]||0)){apagar[r0]=true;mk.set(k,r);}else apagar[r]=true;}
+        if(txt(v[r][4])&&diaDe(v[r][1])>0){
+          const k=chaveLinhaTrat(v[r]);chaves.push([k]);
+          if(mk.has(k)){const r0=mk.get(k);if((+v[r][14]||0)>=(+v[r0][14]||0)){apagar[r0]=true;mk.set(k,r);}else apagar[r]=true;}
           else mk.set(k,r);
         }else chaves.push([""]);
       }
-      t.columns.getItemAt(16).getDataBodyRange().values=chaves;
-      await ctx.sync();
-      for(let r=n-1;r>=0;r--){ if(apagar[r]){ t.rows.getItemAt(r).delete(); removidas++; } }
+      t.columns.getItemAt(16).getDataBodyRange().values=chaves;await ctx.sync();
+      for(let r=n-1;r>=0;r--)if(apagar[r]){t.rows.getItemAt(r).delete();removidas++;}
       await ctx.sync();
     }
-    const b2=t.getDataBodyRange().load("values"); await ctx.sync();
+    const b2=t.getDataBodyRange().load("values");await ctx.sync();
     trat=new Map();
     for(const row of b2.values){
-      const st=txt(row[4]), d=diaDe(row[1]);
-      if(st&&d>0) trat.set(chaveSite(d,txt(row[12]),st),{causa:txt(row[8]),tmr:txt(row[9]),desc:txt(row[10]),status:txt(row[11]),obs:txt(row[13])});
+      if(txt(row[4])&&diaDe(row[1])>0)
+        trat.set(chaveLinhaTrat(row),{causa:txt(row[8]),tmr:txt(row[9]),desc:txt(row[10]),status:txt(row[11]),obs:txt(row[13])});
     }
   });
   return removidas;
@@ -382,301 +366,277 @@ function opcoes(sel,vals){sel.innerHTML=[TODOS,...vals].map(s=>"<option value=\"
 function preencherFiltros(){
   const U=(arr,own)=>{const s=new Set();for(let i=0;i<B.n;i++){let x=arr[i];if(own&&!x)x=SEM_OWNER;if(x)s.add(x);}return[...s].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));};
   $("fData").innerHTML=datas.map((d,i)=>"<option value=\""+i+"\">"+fmtD(d)+"</option>").join("");
-  opcoes($("fTec"),U(B.tec)); opcoes($("fUF"),U(B.uf)); opcoes($("fCN"),U(B.cn));
-  opcoes($("fMun"),U(B.mun)); opcoes($("fOwn"),U(B.own,true));
+  opcoes($("fTec"),U(B.tec));opcoes($("fUF"),U(B.uf));opcoes($("fCN"),U(B.cn));
+  opcoes($("fMun"),U(B.mun));opcoes($("fOwn"),U(B.own,true));
 }
-function lerFiltros(){
-  const v=id=>{const x=$(id).value;return x===TODOS?"":x;};
-  return{tec:v("fTec"),uf:v("fUF"),cn:v("fCN"),mun:v("fMun"),own:v("fOwn"),stat:v("fStat"),
-         busca:$("fBusca").value.trim().toUpperCase(),att:$("fAtt").checked};
-}
+function lerFiltros(){const v=id=>{const x=$(id).value;return x===TODOS?"":x;};
+  return{tec:v("fTec"),uf:v("fUF"),cn:v("fCN"),mun:v("fMun"),own:v("fOwn"),stat:v("fStat"),busca:$("fBusca").value.trim().toUpperCase(),att:$("fAtt").checked};}
 function passa(i,F){
-  if(F.tec&&B.tec[i]!==F.tec)return false; if(F.uf&&B.uf[i]!==F.uf)return false;
-  if(F.cn&&B.cn[i]!==F.cn)return false; if(F.mun&&B.mun[i]!==F.mun)return false;
+  if(F.tec&&B.tec[i]!==F.tec)return false;if(F.uf&&B.uf[i]!==F.uf)return false;
+  if(F.cn&&B.cn[i]!==F.cn)return false;if(F.mun&&B.mun[i]!==F.mun)return false;
   if(F.own&&(B.own[i]||SEM_OWNER)!==F.own)return false;
-  if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0)return false;
-  return true;
-}
+  if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0)return false;return true;}
 
+/* ===== QUADRO 1: SITES ===== */
 function aplicarFiltro(){
   if(!B.n)return;
-  dSel=datas[+$("fData").value||0]; const F=lerFiltros(); const m=new Map();
-  for(const i of (dayIdx.get(dSel)||[])){
+  dSel=datas[+$("fData").value||0];const F=lerFiltros();const m=new Map();let nSetTrat=0;
+  for(const i of(dayIdx.get(dSel)||[])){
     if(!passa(i,F))continue;
-    const k=chaveGrupo(B.st[i],B.tec[i]); let r=m.get(k);
-    if(!r){r={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0};m.set(k,r);}
-    r.qc++; const a=B.av[i]; if(!isNaN(a)){if(a<r.min)r.min=a;r.soma+=a;r.qa++;if(a<=LIMITE)r.att++;}
+    const k=chaveGrupo(B.st[i],B.tec[i]);let r=m.get(k);
+    if(!r){r={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0,tA:0,tT:0};m.set(k,r);}
+    r.qc++;const tr=trat.has(chaveLinha(i));if(tr)r.tT++;
+    const a=B.av[i];if(!isNaN(a)){if(a<r.min)r.min=a;r.soma+=a;r.qa++;if(a<=LIMITE){r.att++;if(tr)r.tA++;}}
   }
-  let nAtt=0,nSem=0,nCom=0; sitesView=[];
+  let nAtt=0,nSem=0;sitesView=[];
   for(const r of m.values()){
-    const t=trat.get(chaveSite(dSel,r.tec,r.st)); r.stt=(t&&t.status)?t.status:SEM_TRAT;
-    if(F.att&&r.att===0)continue; if(F.stat&&r.stt!==F.stat)continue;
-    if(r.att>0){nAtt++;if(r.stt===SEM_TRAT)nSem++;} if(r.stt!==SEM_TRAT)nCom++;
-    r.med=r.qa?r.soma/r.qa:NaN; if(!r.qa)r.min=NaN; sitesView.push(r);
+    r.stt=statusSite(r.att,r.tA,r.tT);
+    if(F.att&&r.att===0)continue;if(F.stat&&!r.stt.startsWith(F.stat))continue;
+    if(r.att>0){nAtt++;if(r.tA===0)nSem++;}nSetTrat+=r.tT;
+    r.med=r.qa?r.soma/r.qa:NaN;if(!r.qa)r.min=NaN;sitesView.push(r);
   }
   sitesView.sort((a,b)=>(isNaN(a.min)?1000:a.min)-(isNaN(b.min)?1000:b.min));
-  $("kList").textContent=sitesView.length.toLocaleString("pt-BR"); $("kAtt").textContent=nAtt.toLocaleString("pt-BR");
-  $("kSem").textContent=nSem.toLocaleString("pt-BR"); $("kCom").textContent=nCom.toLocaleString("pt-BR");
-  $("ttlSites").textContent="Sites · "+fmtD(dSel)+" · do pior AVAIL para o melhor";
-  renderSites(); limparDetalhe();
-  setStatus("Base: "+B.n.toLocaleString("pt-BR")+" linhas no ANALITICO · "+trat.size.toLocaleString("pt-BR")+" site(s)/dia com tratativa.");
-  if(!$("pgEvol").classList.contains("hide")) renderEvolutivo();
+  $("kList").textContent=sitesView.length.toLocaleString("pt-BR");$("kAtt").textContent=nAtt.toLocaleString("pt-BR");
+  $("kSem").textContent=nSem.toLocaleString("pt-BR");$("kSet").textContent=nSetTrat.toLocaleString("pt-BR");
+  $("ttlSites").textContent="Selecione o SITE · "+fmtD(dSel)+" · do pior AVAIL para o melhor";
+  renderSites();limparDetalhe();
+  setStatus("Passo 1: selecione um SITE.  (Base: "+B.n.toLocaleString("pt-BR")+" linhas no ANALITICO)");
+  if(!$("pgEvol").classList.contains("hide"))renderEvolutivo();
 }
 function avCls(x){return isNaN(x)?"":(x<=LIMITE?"av-r":"av-g");}
+function linhaSite(r,ix){return"<tr class=\"clk\" data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
+  "</td><td>"+esc(r.own)+"</td><td class=\"n "+avCls(r.min)+"\">"+f2(r.min)+"</td><td class=\"n "+avCls(r.med)+"\">"+f2(r.med)+
+  "</td><td class=\"n\">"+r.qc+"</td><td class=\"n\">"+r.att+"</td><td><span class=\"pill "+pillCls(r.stt)+"\">"+esc(r.stt)+"</span></td></tr>";}
 function renderSites(){
-  const h=[];
-  sitesView.forEach((r,ix)=>{
-    h.push("<tr data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
-      "</td><td>"+esc(r.own)+"</td><td class=\"n "+avCls(r.min)+"\">"+f2(r.min)+"</td><td class=\"n "+avCls(r.med)+"\">"+f2(r.med)+
-      "</td><td class=\"n\">"+r.qc+"</td><td class=\"n\">"+r.att+"</td><td><span class=\"pill "+pillCls(r.stt)+"\">"+esc(r.stt)+"</span></td></tr>");
-  });
-  $("tbSites").tBodies[0].innerHTML=h.join("")||"<tr><td colspan=\"11\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
+  $("tbSites").tBodies[0].innerHTML=sitesView.map(linhaSite).join("")||"<tr><td colspan=\"11\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
+}
+function atualizarLinhaSite(){
+  const r=siteSel;if(!r)return;let att=0,tA=0,tT=0;
+  for(const i of(grp.get(chaveGrupo(r.st,r.tec))||[])){if(B.day[i]!==dSel)continue;const tr=trat.has(chaveLinha(i));if(tr)tT++;
+    const a=B.av[i];if(!isNaN(a)&&a<=LIMITE){att++;if(tr)tA++;}}
+  r.tA=tA;r.tT=tT;r.stt=statusSite(att,tA,tT);
+  const ix=sitesView.indexOf(r);const tr=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");
+  if(tr){tr.outerHTML=linhaSite(r,ix);const n=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");if(n)n.classList.add("sel");}
 }
 
-function limparDetalhe(){
-  siteSel=null; $("tbCel").tBodies[0].innerHTML=""; $("tbHist").tBodies[0].innerHTML="";
-  ["tCausa","tTMR","tDesc","tStatus","tObs"].forEach(id=>$(id).value="");
-  $("siteHdr").className="sitehdr"; $("siteHdr").textContent="Selecione um site na lista para ver células, histórico e registrar a tratativa.";
-  $("btnSalvar").disabled=true; $("btnSalvar").textContent="Salvar tratativa"; $("btnSalvar").className="btn b-red"; $("btnCancelar").disabled=true;
+/* ===== FORMULÁRIO ===== */
+const CAMPOS=["tCausa","tTMR","tDesc","tStatus","tObs"];
+function formAtivo(on){CAMPOS.forEach(id=>$(id).disabled=!on);$("formTrat").classList.toggle("off",!on);$("btnSalvar").disabled=!on;}
+function limparForm(){
+  setorSel=-1;CAMPOS.forEach(id=>$(id).value="");formAtivo(false);
+  $("btnSalvar").textContent="Salvar tratativa";$("btnSalvar").className="btn b-red";$("btnCancelar").disabled=true;
+  $("setorHdr").className="sitehdr";$("setorHdr").textContent=siteSel?"Passo 2: selecione o SETOR no quadro 2.":"Selecione o site (1) e o setor (2).";
+  $("chaveTxt").textContent="";
 }
+function limparDetalhe(){siteSel=null;$("tbCel").tBodies[0].innerHTML="";$("tbHist").tBodies[0].innerHTML="";
+  $("siteHdr").textContent="Selecione um site no quadro 1.";limparForm();}
+
+/* ===== QUADRO 2: SETORES DA DATA ===== */
 function mostrarSite(ix){
-  const r=sitesView[ix]; if(!r)return; siteSel=r;
+  const r=sitesView[ix];if(!r)return;siteSel=r;
   [...$("tbSites").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.ix===ix));
-  const rows=grp.get(chaveGrupo(r.st,r.tec))||[]; const cel=[], H=new Map();
+  const rows=grp.get(chaveGrupo(r.st,r.tec))||[];const cel=[],H=new Map();
   for(const i of rows){
-    const d=B.day[i]; if(d<=0)continue; let h=H.get(d); if(!h){h={min:Infinity,s:0,q:0,att:0};H.set(d,h);}
-    const a=B.av[i]; if(!isNaN(a)){if(a<h.min)h.min=a;h.s+=a;h.q++;if(a<=LIMITE)h.att++;}
-    if(d===dSel)cel.push({erb:B.erb[i],vis:B.vis[i],av:a});
+    const d=B.day[i];if(d<=0)continue;let h=H.get(d);if(!h){h={min:Infinity,s:0,q:0,att:0};H.set(d,h);}
+    const a=B.av[i];if(!isNaN(a)){if(a<h.min)h.min=a;h.s+=a;h.q++;if(a<=LIMITE)h.att++;}
+    if(d===dSel)cel.push(i);                              // SOMENTE a data selecionada
   }
-  cel.sort((a,b)=>(isNaN(a.av)?1000:a.av)-(isNaN(b.av)?1000:b.av));
-  $("tbCel").tBodies[0].innerHTML=cel.map(c=>"<tr><td>"+esc(c.erb)+"</td><td>"+esc(c.vis)+"</td><td class=\"n "+avCls(c.av)+"\">"+f2(c.av)+"</td></tr>").join("");
+  cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));
+  renderSetores(cel);
   const dias=[...H.keys()].sort((a,b)=>b-a).slice(0,MAX_HIST);
   $("tbHist").tBodies[0].innerHTML=dias.map(d=>{const h=H.get(d);const mn=h.q?h.min:NaN,md=h.q?h.s/h.q:NaN;
-    return "<tr"+(d===dSel?" class=\"sel\"":"")+"><td>"+fmtD(d)+"</td><td class=\"n "+avCls(mn)+"\">"+f2(mn)+"</td><td class=\"n "+avCls(md)+"\">"+f2(md)+"</td><td class=\"n\">"+h.att+"</td></tr>";}).join("");
-  const base=esc(r.st)+" · "+esc(r.tec)+" · "+esc(r.mun)+"/"+esc(r.uf)+" · Owner: "+esc(r.own)+" · AVAIL mín: "+f2(r.min);
-  const t=trat.get(chaveSite(dSel,r.tec,r.st));
-  $("btnSalvar").disabled=false;
-  if(t){
-    $("tCausa").value=t.causa;$("tTMR").value=t.tmr;$("tDesc").value=t.desc;$("tStatus").value=t.status;$("tObs").value=t.obs;
-    $("siteHdr").className="sitehdr edit"; $("siteHdr").innerHTML=base+"<br>&gt;&gt;&gt; TRATATIVA EXISTENTE (modo edição)";
-    $("btnSalvar").textContent="Atualizar tratativa"; $("btnSalvar").className="btn b-org"; $("btnCancelar").disabled=false;
-    setStatus("Tratativa já registrada em "+fmtD(dSel)+". Altere e clique em 'Atualizar tratativa' ou use 'Cancelar tratativa'.");
-  }else{
-    ["tCausa","tTMR","tDesc","tObs"].forEach(id=>$(id).value="");
-    const h=H.get(dSel); if(h&&h.q&&h.min>=LIMITE_SLA4H)$("tTMR").value="Recuperado dentro do SLA de 4H";
-    $("tStatus").value="Em andamento";
-    $("siteHdr").className="sitehdr"; $("siteHdr").innerHTML=base;
-    $("btnSalvar").textContent="Salvar tratativa"; $("btnSalvar").className="btn b-red"; $("btnCancelar").disabled=true;
-    setStatus("Sem tratativa para este site na data. Causa TMR sugerida pela regra AVAIL ≥ 83,33 (SLA 4H).");
-  }
+    return"<tr"+(d===dSel?" class=\"sel\"":"")+"><td>"+fmtD(d)+"</td><td class=\"n "+avCls(mn)+"\">"+f2(mn)+"</td><td class=\"n "+avCls(md)+"\">"+f2(md)+"</td><td class=\"n\">"+h.att+"</td></tr>";}).join("");
+  const nAtt=cel.filter(i=>!isNaN(B.av[i])&&B.av[i]<=LIMITE).length;
+  $("siteHdr").textContent=r.st+" · "+r.tec+" · "+r.mun+"/"+r.uf+" · "+fmtD(dSel)+" · "+cel.length+" setor(es), "+nAtt+" ≤ 99,60";
+  limparForm();
+  setStatus("Site "+r.st+" selecionado. Passo 2: selecione o SETOR (VISAO_FILTRO).");
+}
+function stSetor(i){const t=trat.get(chaveLinha(i));if(t)return t.status||"Registrado";const a=B.av[i];return(!isNaN(a)&&a<=LIMITE)?SEM_TRAT:"-";}
+function renderSetores(cel){
+  $("tbCel").tBodies[0].innerHTML=cel.map(i=>{const s=stSetor(i);
+    return"<tr class=\"clk"+(i===setorSel?" sel":"")+"\" data-i=\""+i+"\"><td>"+esc(B.erb[i])+"</td><td><b>"+esc(B.vis[i])+"</b></td><td class=\"n "+avCls(B.av[i])+"\">"+f2(B.av[i])+
+      "</td><td><span class=\"pill "+pillCls(s)+"\">"+esc(s)+"</span></td></tr>";}).join("")||"<tr><td colspan=\"4\" style=\"color:#888\">Sem setores na data.</td></tr>";
 }
 
-/* ======================= SALVAR (UPSERT PELA CHAVE DATA|STATION|ERB|VISAO_FILTRO) ======================= */
+/* ===== SELEÇÃO DO SETOR -> CHAVE COMPLETA ===== */
+function mostrarSetor(i){
+  if(!siteSel)return;setorSel=i;
+  [...$("tbCel").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.i===i));
+  const k=chaveLinha(i),t=trat.get(k);formAtivo(true);
+  const base="SETOR "+B.vis[i]+" · ERB "+B.erb[i]+" · AVAIL "+f2(B.av[i]);
+  $("chaveTxt").textContent="CHAVE: "+k;
+  if(t){
+    $("tCausa").value=t.causa;$("tTMR").value=t.tmr;$("tDesc").value=t.desc;$("tStatus").value=t.status;$("tObs").value=t.obs;
+    $("setorHdr").className="sitehdr edit";$("setorHdr").textContent=base+"  >>> TRATATIVA EXISTENTE (edição)";
+    $("btnSalvar").textContent="Atualizar tratativa";$("btnSalvar").className="btn b-org";$("btnCancelar").disabled=false;
+    setStatus("Setor com tratativa. Altere e clique em 'Atualizar tratativa' ou 'Cancelar tratativa'.");
+  }else{
+    ["tCausa","tTMR","tDesc","tObs"].forEach(id=>$(id).value="");
+    if(!isNaN(B.av[i])&&B.av[i]>=LIMITE_SLA4H)$("tTMR").value="Recuperado dentro do SLA de 4H";
+    $("tStatus").value="Em andamento";
+    $("setorHdr").className="sitehdr ok";$("setorHdr").textContent=base;
+    $("btnSalvar").textContent="Salvar tratativa";$("btnSalvar").className="btn b-red";$("btnCancelar").disabled=true;
+    setStatus("Setor sem tratativa. Passo 3: preencha e clique em 'Salvar tratativa'.");
+  }
+}
+function refreshSetores(){const r=siteSel;if(!r)return;
+  const cel=(grp.get(chaveGrupo(r.st,r.tec))||[]).filter(i=>B.day[i]===dSel);
+  cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));renderSetores(cel);}
+
+/* ===== SALVAR (1 linha por setor, upsert pela CHAVE) ===== */
 let salvando=false;
 async function salvar(){
-  const r=siteSel; if(!r||salvando)return;
-  const causa=$("tCausa").value.trim(), tmr=$("tTMR").value.trim(), desc=$("tDesc").value.trim(),
-        status=$("tStatus").value.trim(), obs=$("tObs").value.trim();
+  const i=setorSel,r=siteSel;if(!r||i<0||salvando){toast("Atenção","Selecione o SITE (1) e o SETOR (2).","wrn");return;}
+  const causa=$("tCausa").value.trim(),tmr=$("tTMR").value.trim(),desc=$("tDesc").value.trim(),status=$("tStatus").value.trim(),obs=$("tObs").value.trim();
   if(!causa||!status){toast("Campos obrigatórios","Preencha pelo menos 'Causa Disponibilidade' e 'Status'.","wrn");return;}
-  const usuario=$("usuario").value.trim()||"HTML"; localStorage.setItem("rnoUsuario",usuario);
-  const linhas=(grp.get(chaveGrupo(r.st,r.tec))||[]).filter(i=>B.day[i]===dSel);
-  if(!linhas.length){toast("Atenção","Nenhuma célula encontrada para o site na data.","wrn");return;}
-  const nAttCel=linhas.filter(i=>!isNaN(B.av[i])&&B.av[i]<=LIMITE).length;
-  const jaExistia=trat.has(chaveSite(dSel,r.tec,r.st)); const agora=agoraSerial();
-
-  const porChave=new Map();
-  for(const i of linhas){
-    const a=B.av[i]; if(!(nAttCel===0||(!isNaN(a)&&a<=LIMITE)))continue;
-    const k=chaveCel(dSel,r.st,B.erb[i],B.vis[i]);
-    const cnNum=Number(B.cn[i]);
-    porChave.set(k,[B.own[i],dSel,B.uf[i],(B.cn[i]!==""&&isFinite(cnNum))?cnNum:B.cn[i],r.st,B.erb[i],B.vis[i],isNaN(a)?"":a,
-                   causa,tmr,desc,status,r.tec,obs,agora,usuario,k]);
-  }
-  let nNovas=0,nAtual=0,nLimp=0;
-  salvando=true; $("btnSalvar").disabled=true;
+  const usuario=$("usuario").value.trim()||"HTML";localStorage.setItem("rnoUsuario",usuario);
+  const k=chaveLinha(i),jaExistia=trat.has(k),a=B.av[i],cnNum=Number(B.cn[i]);
+  const arr=[B.own[i],dSel,B.uf[i],(B.cn[i]!==""&&isFinite(cnNum))?cnNum:B.cn[i],B.st[i],B.erb[i],B.vis[i],isNaN(a)?"":a,
+             causa,tmr,desc,status,B.tec[i],obs,agoraSerial(),usuario,k];
+  salvando=true;$("btnSalvar").disabled=true;
   try{
     await Excel.run(async ctx=>{
-      const t=await garantirTabelaTrat(ctx);
-      const body=t.getDataBodyRange().load("values"); await ctx.sync();
-      const v=body.values;
-      const existe=new Map();
-      v.forEach((row,ri)=>{ if(!txt(row[4]))return; const k=chaveLinhaTrat(row);
-        if(!existe.has(k))existe.set(k,[]); existe.get(k).push(ri);});
-      const vazia=(v.length===1&&!txt(v[0][4]));
-      const apagar=[], novas=[];
-      for(const [k,arr] of porChave){
-        const rs=existe.get(k);
-        if(rs&&rs.length){
-          t.rows.getItemAt(rs[0]).values=[arr]; nAtual++;
-          for(let j=1;j<rs.length;j++){apagar.push(rs[j]);nLimp++;}
-        }else novas.push(arr);
-      }
+      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();
+      const v=body.values,achou=[];
+      v.forEach((row,ri)=>{if(txt(row[4])&&chaveLinhaTrat(row)===k)achou.push(ri);});
+      if(achou.length){
+        t.rows.getItemAt(achou[0]).values=[arr];await ctx.sync();
+        for(let j=achou.length-1;j>=1;j--)t.rows.getItemAt(achou[j]).delete();
+      }else if(v.length===1&&!txt(v[0][4])){t.rows.getItemAt(0).values=[arr];}
+      else{t.rows.add(null,[arr]);}
       await ctx.sync();
-      apagar.sort((a,b)=>b-a);
-      for(const ri of apagar)t.rows.getItemAt(ri).delete();
-      if(apagar.length)await ctx.sync();
-      if(novas.length){
-        if(vazia){t.rows.getItemAt(0).values=[novas.shift()]; nNovas++;}
-        if(novas.length){t.rows.add(null,novas); nNovas+=novas.length;}
-        await ctx.sync();
-      }
-      const b2=t.getDataBodyRange().load("rowCount"); await ctx.sync();
+      const b2=t.getDataBodyRange().load("rowCount");await ctx.sync();
       t.columns.getItemAt(1).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"dd/mm/yyyy");
       t.columns.getItemAt(7).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"0.00");
       t.columns.getItemAt(14).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"dd/mm/yyyy hh:mm");
       await ctx.sync();
     });
-    trat.set(chaveSite(dSel,r.tec,r.st),{causa,tmr,desc,status,obs});
-    r.stt=status; const ix=sitesView.indexOf(r); renderSites(); mostrarSite(ix);
+    trat.set(k,{causa,tmr,desc,status,obs});
+    refreshSetores();atualizarLinhaSite();mostrarSetor(i);
     toast(jaExistia?"TRATATIVA ATUALIZADA COM SUCESSO!":"TRATATIVA CADASTRADA COM SUCESSO!",
-          "Site: "+r.st+" ("+r.tec+")\nData: "+fmtD(dSel)+"\nStatus: "+status+"\nCélulas novas: "+nNovas+" | atualizadas: "+nAtual+
-          (nLimp?"\nRepetidas antigas removidas: "+nLimp:""));
-    setStatus("Tratativa gravada em "+TABELA_TRAT+". Salve a pasta (Ctrl+B).");
+      "Site: "+B.st[i]+" ("+B.tec[i]+")\nSetor: "+B.vis[i]+"  |  ERB: "+B.erb[i]+"\nData: "+fmtD(dSel)+"\nStatus: "+status);
+    setStatus("Tratativa do setor "+B.vis[i]+" gravada. Selecione outro setor ou site. Salve a pasta (Ctrl+B).");
   }catch(e){toast("Erro ao gravar a tratativa",e.message||String(e),"err");}
-  finally{salvando=false;$("btnSalvar").disabled=!siteSel;}
+  finally{salvando=false;$("btnSalvar").disabled=setorSel<0;}
 }
 
+/* ===== CANCELAR (somente o setor) ===== */
 async function cancelar(){
-  const r=siteSel; if(!r)return; const ks=chaveSite(dSel,r.tec,r.st);
-  if(!trat.has(ks)){toast("Atenção","Este site não possui tratativa nesta data.","wrn");return;}
-  const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa?\n\nSite: "+r.st+" ("+r.tec+")\nData: "+fmtD(dSel)+
-    "\n\nAs linhas deste site/data serão EXCLUÍDAS da aba "+ABA_TRAT+" (o ANALITICO não é alterado).");
-  if(!ok)return; let nDel=0;
+  const i=setorSel;if(i<0)return;const k=chaveLinha(i);
+  if(!trat.has(k)){toast("Atenção","Este setor não possui tratativa nesta data.","wrn");return;}
+  const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa deste SETOR?\n\nSite: "+B.st[i]+" ("+B.tec[i]+")\nSetor: "+B.vis[i]+"\nData: "+fmtD(dSel)+
+    "\n\nA linha será EXCLUÍDA da aba "+ABA_TRAT+" (o ANALITICO não é alterado).");
+  if(!ok)return;let nDel=0;
   try{
     await Excel.run(async ctx=>{
-      const t=await garantirTabelaTrat(ctx); const body=t.getDataBodyRange().load("values"); await ctx.sync();
-      const v=body.values; const alvo=[];
-      for(let i=0;i<v.length;i++){
-        if(diaDe(v[i][1])===dSel&&txt(v[i][4]).toUpperCase()===r.st.toUpperCase()&&txt(v[i][12]).toUpperCase()===r.tec.toUpperCase())alvo.push(i);
-      }
-      if(alvo.length&&alvo.length===v.length){
-        for(let j=alvo.length-1;j>=1;j--)t.rows.getItemAt(alvo[j]).delete();
-        t.getDataBodyRange().clear(Excel.ClearApplyTo.contents);
-      }else{
-        for(let j=alvo.length-1;j>=0;j--)t.rows.getItemAt(alvo[j]).delete();
-      }
-      nDel=alvo.length; await ctx.sync();
+      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();
+      const v=body.values,alvo=[];v.forEach((row,ri)=>{if(txt(row[4])&&chaveLinhaTrat(row)===k)alvo.push(ri);});
+      if(alvo.length&&alvo.length===v.length){for(let j=alvo.length-1;j>=1;j--)t.rows.getItemAt(alvo[j]).delete();t.getDataBodyRange().clear(Excel.ClearApplyTo.contents);}
+      else for(let j=alvo.length-1;j>=0;j--)t.rows.getItemAt(alvo[j]).delete();
+      nDel=alvo.length;await ctx.sync();
     });
-    trat.delete(ks); r.stt=SEM_TRAT; const ix=sitesView.indexOf(r); renderSites(); mostrarSite(ix);
-    toast("TRATATIVA CANCELADA COM SUCESSO!","Site: "+r.st+" ("+r.tec+")\nLinhas excluídas: "+nDel);
-    setStatus("Tratativa cancelada. Salve a pasta (Ctrl+B).");
+    trat.delete(k);refreshSetores();atualizarLinhaSite();mostrarSetor(i);
+    toast("TRATATIVA CANCELADA COM SUCESSO!","Setor: "+B.vis[i]+"\nLinhas excluídas: "+nDel);
+    setStatus("Tratativa do setor cancelada. Salve a pasta (Ctrl+B).");
   }catch(e){toast("Erro ao cancelar a tratativa",e.message||String(e),"err");}
 }
 
+/* ===== EXPORTAR: 1 linha por SETOR ===== */
 async function prepararAba(ctx,nome){
-  let ws=ctx.workbook.worksheets.getItemOrNullObject(nome); await ctx.sync();
-  if(ws.isNullObject){ws=ctx.workbook.worksheets.add(nome);}
-  else{ws.autoFilter.remove(); ws.getRange().clear(); ws.getRange().conditionalFormats.clearAll(); ws.freezePanes.unfreeze();}
-  await ctx.sync(); return ws;
+  let ws=ctx.workbook.worksheets.getItemOrNullObject(nome);await ctx.sync();
+  if(ws.isNullObject)ws=ctx.workbook.worksheets.add(nome);
+  else{ws.autoFilter.remove();ws.getRange().clear();ws.getRange().conditionalFormats.clearAll();ws.freezePanes.unfreeze();}
+  await ctx.sync();return ws;
 }
 async function exportar(){
-  const n=sitesView.length; if(!n){toast("Exportar","Não há sites na lista para exportar.","wrn");return;}
-  const cab=["DATA","STATION","TECNOLOGIA","UF","CN","MUNICÍPIO","CELL OWNER","AVAIL MÍN","AVAIL MÉD","CÉLULAS","CÉLULAS <= 99,60",
-             "STATUS TRATATIVA","CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO"];
-  const out=[cab];
-  for(const r of sitesView){const t=trat.get(chaveSite(dSel,r.tec,r.st))||{};const cn=Number(r.cn);
-    out.push([dSel,r.st,r.tec,r.uf,(r.cn!==""&&isFinite(cn))?cn:r.cn,r.mun,r.own,isNaN(r.min)?"":+r.min.toFixed(2),isNaN(r.med)?"":+r.med.toFixed(2),
-              r.qc,r.att,r.stt,t.causa||"",t.tmr||"",t.desc||"",t.obs||""]);}
+  if(!sitesView.length){toast("Exportar","Não há sites na lista.","wrn");return;}
+  const soAtt=$("fAtt").checked;
+  const out=[["DATA","STATION","TECNOLOGIA","UF","CN","MUNICÍPIO","CELL OWNER","ERB","SETOR (VISAO_FILTRO)","AVAIL","STATUS TRATATIVA",
+              "CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO","CHAVE"]];
+  for(const r of sitesView){
+    for(const i of(grp.get(chaveGrupo(r.st,r.tec))||[])){
+      if(B.day[i]!==dSel)continue;const a=B.av[i];if(soAtt&&!(!isNaN(a)&&a<=LIMITE))continue;
+      const k=chaveLinha(i),t=trat.get(k)||{},cn=Number(B.cn[i]);
+      out.push([dSel,B.st[i],B.tec[i],B.uf[i],(B.cn[i]!==""&&isFinite(cn))?cn:B.cn[i],B.mun[i],B.own[i],B.erb[i],B.vis[i],isNaN(a)?"":a,
+                t.status||SEM_TRAT,t.causa||"",t.tmr||"",t.desc||"",t.obs||"",k]);
+    }
+  }
+  const n=out.length-1;if(!n){toast("Exportar","Nenhum setor para exportar.","wrn");return;}
   try{
     await Excel.run(async ctx=>{
-      const ws=await prepararAba(ctx,ABA_EXPORT);
-      const rg=ws.getRangeByIndexes(0,0,n+1,16); rg.values=out;
-      const h=ws.getRangeByIndexes(0,0,1,16); h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
-      ws.getRangeByIndexes(1,0,n,1).numberFormat=fill(n,1,"dd/mm/yyyy");
-      ws.getRangeByIndexes(1,7,n,2).numberFormat=fill(n,2,"0.00");
-      ws.autoFilter.apply(rg); rg.format.autofitColumns(); ws.activate(); await ctx.sync();
+      const ws=await prepararAba(ctx,ABA_EXPORT);const rg=ws.getRangeByIndexes(0,0,n+1,16);rg.values=out;
+      const h=ws.getRangeByIndexes(0,0,1,16);h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
+      ws.getRangeByIndexes(1,0,n,1).numberFormat=fill(n,1,"dd/mm/yyyy");ws.getRangeByIndexes(1,9,n,1).numberFormat=fill(n,1,"0.00");
+      ws.autoFilter.apply(rg);rg.format.autofitColumns();ws.activate();await ctx.sync();
     });
-    toast("Exportação concluída",n+" site(s) exportado(s) para a aba '"+ABA_EXPORT+"'.");
+    toast("Exportação concluída",n+" setor(es) de "+sitesView.length+" site(s) na aba '"+ABA_EXPORT+"'.");
   }catch(e){toast("Erro ao exportar",e.message||String(e),"err");}
 }
 
+/* ===== EVOLUTIVO ===== */
 let evol=null;
 function calcEvolutivo(){
-  const x=serialToDate(dSel); const y=x.getUTCFullYear(), mo=x.getUTCMonth();
-  const d1=Math.round((Date.UTC(y,mo,1)-Date.UTC(1899,11,30))/86400000); const nd=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
-  const F=lerFiltros(), metr=$("eMetr").value, S=new Map();
-  for(let dd=0;dd<nd;dd++){
-    for(const i of (dayIdx.get(d1+dd)||[])){
-      const a=B.av[i]; if(isNaN(a)||!passa(i,F))continue;
-      const k=chaveGrupo(B.st[i],B.tec[i]); let s=S.get(k);
-      if(!s){s={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,sum:new Float64Array(nd),cnt:new Int32Array(nd),min:new Float64Array(nd).fill(Infinity)};S.set(k,s);}
-      s.sum[dd]+=a; s.cnt[dd]++; if(a<s.min[dd])s.min[dd]=a;
-    }
-  }
+  const x=serialToDate(dSel),y=x.getUTCFullYear(),mo=x.getUTCMonth();
+  const d1=Math.round((Date.UTC(y,mo,1)-Date.UTC(1899,11,30))/86400000),nd=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
+  const F=lerFiltros(),metr=$("eMetr").value,S=new Map();
+  for(let dd=0;dd<nd;dd++)for(const i of(dayIdx.get(d1+dd)||[])){
+    const a=B.av[i];if(isNaN(a)||!passa(i,F))continue;const k=chaveGrupo(B.st[i],B.tec[i]);let s=S.get(k);
+    if(!s){s={st:B.st[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,sum:new Float64Array(nd),cnt:new Int32Array(nd),min:new Float64Array(nd).fill(Infinity)};S.set(k,s);}
+    s.sum[dd]+=a;s.cnt[dd]++;if(a<s.min[dd])s.min[dd]=a;}
   const lista=[];
-  for(const s of S.values()){
-    s.val=new Array(nd).fill(null); let soma=0,q=0; s.verm=0;
-    for(let dd=0;dd<nd;dd++){ if(s.cnt[dd]){const v=metr==="MIN"?s.min[dd]:s.sum[dd]/s.cnt[dd]; const vr=Math.round(v*100)/100;
-      s.val[dd]=vr; if(vr<=LIMITE)s.verm++; soma+=v; q++;} }
-    s.media=q?soma/q:NaN;
-    if(!F.att||s.verm>0)lista.push(s);
-  }
+  for(const s of S.values()){s.val=new Array(nd).fill(null);let soma=0,q=0;s.verm=0;
+    for(let dd=0;dd<nd;dd++)if(s.cnt[dd]){const v=metr==="MIN"?s.min[dd]:s.sum[dd]/s.cnt[dd],vr=Math.round(v*100)/100;s.val[dd]=vr;if(vr<=LIMITE)s.verm++;soma+=v;q++;}
+    s.media=q?soma/q:NaN;if(!F.att||s.verm>0)lista.push(s);}
   lista.sort((a,b)=>(b.verm-a.verm)||((a.media||0)-(b.media||0)));
   evol={d1,nd,lista,metr,mes:String(mo+1).padStart(2,"0")+"/"+y};
 }
 function renderEvolutivo(){
-  if(!B.n)return; calcEvolutivo(); const E=evol;
+  if(!B.n)return;calcEvolutivo();const E=evol;
   $("ttlEvol").textContent="Evolutivo diário · "+E.mes+" · "+E.lista.length.toLocaleString("pt-BR")+" site(s)";
   let th="<tr><th class=\"st\">Station</th><th>Tec</th><th>UF</th><th>Município</th><th>Owner</th><th class=\"n\">Dias ≤99,6</th><th class=\"n\">Média mês</th>";
   for(let dd=0;dd<E.nd;dd++)th+="<th>"+String(dd+1).padStart(2,"0")+"/"+E.mes.slice(0,2)+"</th>";
   $("tbEvol").tHead.innerHTML=th+"</tr>";
-  const LIM=600, h=[];
-  E.lista.slice(0,LIM).forEach(s=>{
-    let tr="<tr><td class=\"st\">"+esc(s.st)+"</td><td>"+esc(s.tec)+"</td><td>"+esc(s.uf)+"</td><td>"+esc(s.mun)+"</td><td>"+esc(s.own)+
-           "</td><td class=\"n\"><b>"+s.verm+"</b></td><td class=\"n "+avCls(s.media)+"\">"+f2(s.media)+"</td>";
-    for(const v of s.val)tr+=v===null?"<td class=\"c ce\">·</td>":"<td class=\"c "+(v<=LIMITE?"cr":"cg")+"\">"+f2(v)+"</td>";
-    h.push(tr+"</tr>");
-  });
+  const LIM=600,h=[];
+  E.lista.slice(0,LIM).forEach(s=>{let tr="<tr><td class=\"st\">"+esc(s.st)+"</td><td>"+esc(s.tec)+"</td><td>"+esc(s.uf)+"</td><td>"+esc(s.mun)+"</td><td>"+esc(s.own)+
+    "</td><td class=\"n\"><b>"+s.verm+"</b></td><td class=\"n "+avCls(s.media)+"\">"+f2(s.media)+"</td>";
+    for(const v of s.val)tr+=v===null?"<td class=\"c ce\">·</td>":"<td class=\"c "+(v<=LIMITE?"cr":"cg")+"\">"+f2(v)+"</td>";h.push(tr+"</tr>");});
   if(E.lista.length>LIM)h.push("<tr><td colspan=\"40\" style=\"color:#888\">Exibindo os "+LIM+" piores. Use 'Gerar aba no Excel' para a lista completa.</td></tr>");
   $("tbEvol").tBodies[0].innerHTML=h.join("")||"<tr><td colspan=\"40\" style=\"color:#888;padding:14px\">Nenhum site para os filtros neste mês.</td></tr>";
 }
 async function evolExcel(){
-  if(!evol)calcEvolutivo(); const E=evol, n=E.lista.length; if(!n){toast("Evolutivo","Nenhum site para os filtros.","wrn");return;}
-  const NF=8, NC=NF+E.nd; const cab=["STATION_NAME","TEC","UF","CN","MUNICÍPIO","CELL OWNER","DIAS <=99,6","MÉDIA MÊS"];
-  for(let dd=0;dd<E.nd;dd++)cab.push(E.d1+dd);
-  const out=[cab];
-  for(const s of E.lista){const cn=Number(s.cn);
-    out.push([s.st,s.tec,s.uf,(s.cn!==""&&isFinite(cn))?cn:s.cn,s.mun,s.own,s.verm,isNaN(s.media)?"":Math.round(s.media*100)/100,...s.val.map(v=>v===null?"":v)]);}
+  if(!evol)calcEvolutivo();const E=evol,n=E.lista.length;if(!n){toast("Evolutivo","Nenhum site para os filtros.","wrn");return;}
+  const NF=8,NC=NF+E.nd,cab=["STATION_NAME","TEC","UF","CN","MUNICÍPIO","CELL OWNER","DIAS <=99,6","MÉDIA MÊS"];
+  for(let dd=0;dd<E.nd;dd++)cab.push(E.d1+dd);const out=[cab];
+  for(const s of E.lista){const cn=Number(s.cn);out.push([s.st,s.tec,s.uf,(s.cn!==""&&isFinite(cn))?cn:s.cn,s.mun,s.own,s.verm,isNaN(s.media)?"":Math.round(s.media*100)/100,...s.val.map(v=>v===null?"":v)]);}
   try{
     await Excel.run(async ctx=>{
-      const ws=await prepararAba(ctx,ABA_EVOL);
-      const F=lerFiltros();
-      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+(F.tec||TODOS)+"  UF: "+(F.uf||TODOS)+"  CN: "+(F.cn||TODOS)+
-        "  Município: "+(F.mun||TODOS)+"  Owner: "+(F.own||TODOS)+(F.att?"  |  Só sites com dia <= 99,60":"")]];
-      ws.getRange("A1").format.font.bold=true; ws.getRange("A1").format.font.size=13; ws.getRange("A1").format.font.color="#548235";
-      ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior célula do site":"média das células do site")+" | Gerado pelo painel HTML"]];
-      ws.getRange("B2").numberFormat=[["0.00"]]; ws.getRange("B2").format.font.bold=true; ws.getRange("C2").format.font.italic=true;
-      const rg=ws.getRangeByIndexes(3,0,n+1,NC); rg.values=out;
-      const h=ws.getRangeByIndexes(3,0,1,NC); h.format.fill.color="#548235";h.format.font.color="#FFFFFF";h.format.font.bold=true;h.format.horizontalAlignment="Center";
+      const ws=await prepararAba(ctx,ABA_EVOL),F=lerFiltros();
+      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+(F.tec||TODOS)+"  UF: "+(F.uf||TODOS)+"  CN: "+(F.cn||TODOS)+"  Município: "+(F.mun||TODOS)+"  Owner: "+(F.own||TODOS)]];
+      ws.getRange("A1").format.font.bold=true;ws.getRange("A1").format.font.size=13;ws.getRange("A1").format.font.color="#548235";
+      ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior setor":"média dos setores")]];
+      const rg=ws.getRangeByIndexes(3,0,n+1,NC);rg.values=out;
+      const h=ws.getRangeByIndexes(3,0,1,NC);h.format.fill.color="#548235";h.format.font.color="#FFFFFF";h.format.font.bold=true;
       ws.getRangeByIndexes(3,NF,1,E.nd).numberFormat=fill(1,E.nd,"dd/mm");
-      ws.getRangeByIndexes(4,0,n,1).format.fill.color="#E2EFDA"; ws.getRangeByIndexes(4,0,n,1).format.font.bold=true;
-      const rc=ws.getRangeByIndexes(4,7,n,E.nd+1); rc.numberFormat=fill(n,E.nd+1,"0.00"); rc.format.horizontalAlignment="Center";
-      const c1=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);
-      c1.custom.rule.formula="=AND(H5<>\"\",H5<=$B$2)"; c1.custom.format.fill.color="#E60000"; c1.custom.format.font.color="#FFFFFF"; c1.custom.format.font.bold=true;
-      const c2=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);
-      c2.custom.rule.formula="=AND(H5<>\"\",H5>$B$2)"; c2.custom.format.fill.color="#00964A"; c2.custom.format.font.color="#FFFFFF";
-      ["A:A","E:E","F:F"].forEach((c,i)=>ws.getRange(c).format.columnWidth=[80,130,170][i]);
-      ws.getRange("B:D").format.columnWidth=40; ws.getRange("G:H").format.columnWidth=62;
-      ws.getRangeByIndexes(0,8,1,E.nd).getEntireColumn().format.columnWidth=40;
-      ws.autoFilter.apply(rg); ws.freezePanes.freezeAt(ws.getRange("A1:A4")); ws.activate();
-      await ctx.sync();
+      const rc=ws.getRangeByIndexes(4,7,n,E.nd+1);rc.numberFormat=fill(n,E.nd+1,"0.00");rc.format.horizontalAlignment="Center";
+      const c1=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c1.custom.rule.formula="=AND(H5<>\"\",H5<=$B$2)";
+      c1.custom.format.fill.color="#E60000";c1.custom.format.font.color="#FFFFFF";
+      const c2=rc.conditionalFormats.add(Excel.ConditionalFormatType.custom);c2.custom.rule.formula="=AND(H5<>\"\",H5>$B$2)";
+      c2.custom.format.fill.color="#00964A";c2.custom.format.font.color="#FFFFFF";
+      ws.autoFilter.apply(rg);ws.freezePanes.freezeAt(ws.getRange("A1:A4"));ws.activate();await ctx.sync();
     });
-    toast("Evolutivo gerado",n+" site(s) na aba '"+ABA_EVOL+"'. O painel continua aberto ao lado.");
+    toast("Evolutivo gerado",n+" site(s) na aba '"+ABA_EVOL+"'.");
   }catch(e){toast("Erro ao gerar o evolutivo",e.message||String(e),"err");}
 }
 
 function ligarEventos(){
   ["fData","fTec","fUF","fCN","fMun","fOwn","fStat","fAtt"].forEach(id=>$(id).addEventListener("change",aplicarFiltro));
   $("fBusca").addEventListener("input",()=>{const n=$("fBusca").value.trim().length;if(n===0||n>=3)aplicarFiltro();});
-  $("btnLimpar").addEventListener("click",()=>{$("fData").selectedIndex=0;["fTec","fUF","fCN","fMun","fOwn","fStat"].forEach(id=>$(id).selectedIndex=0);
-    $("fBusca").value="";$("fAtt").checked=true;aplicarFiltro();});
+  $("btnLimpar").addEventListener("click",()=>{$("fData").selectedIndex=0;["fTec","fUF","fCN","fMun","fOwn","fStat"].forEach(id=>$(id).selectedIndex=0);$("fBusca").value="";$("fAtt").checked=true;aplicarFiltro();});
   $("tbSites").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-ix]");if(tr)mostrarSite(+tr.dataset.ix);});
-  $("btnSalvar").addEventListener("click",salvar);
-  $("btnCancelar").addEventListener("click",cancelar);
-  $("btnExportar").addEventListener("click",exportar);
-  $("btnEvolExcel").addEventListener("click",evolExcel);
-  $("eMetr").addEventListener("change",renderEvolutivo);
-  $("btnRecarregar").addEventListener("click",carregarTudo);
+  $("tbCel").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-i]");if(tr)mostrarSetor(+tr.dataset.i);});
+  $("btnSalvar").addEventListener("click",salvar);$("btnCancelar").addEventListener("click",cancelar);
+  $("btnExportar").addEventListener("click",exportar);$("btnEvolExcel").addEventListener("click",evolExcel);
+  $("eMetr").addEventListener("change",renderEvolutivo);$("btnRecarregar").addEventListener("click",carregarTudo);
   $("tabTrat").addEventListener("click",()=>{$("tabTrat").classList.add("on");$("tabEvol").classList.remove("on");$("pgTrat").classList.remove("hide");$("pgEvol").classList.add("hide");});
   $("tabEvol").addEventListener("click",()=>{$("tabEvol").classList.add("on");$("tabTrat").classList.remove("on");$("pgEvol").classList.remove("hide");$("pgTrat").classList.add("hide");renderEvolutivo();});
 }
