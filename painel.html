@@ -5,7 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Sites RNO</title>
-<!-- v5: 1º quadro por STATION + ERB (site com 2 ERBs = 2 linhas) · tratativa por SETOR
+<!-- v6: filtros com SELEÇÃO MÚLTIPLA (Tecnologia, UF, CN, Município, Cell Owner, Tratativa)
+     v5: 1º quadro por STATION + ERB · tratativa por SETOR
      CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO somente leitura -->
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
@@ -25,7 +26,7 @@ button,select,input,textarea{font-family:inherit;font-size:13px}
 .hdr .btnRel{background:#fff;color:var(--red2);border:none;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer}
 .wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;align-items:end;position:relative;z-index:30}
 .f label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;text-transform:uppercase}
 .f select,.f input{width:100%;padding:6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff}
 .f select:focus,.f input:focus,textarea:focus,.form input:focus{outline:2px solid var(--red);border-color:var(--red)}
@@ -84,6 +85,21 @@ textarea{min-height:56px;resize:vertical}
 .heat th{background:var(--green2)} .heat th.st{left:0;z-index:3}
 .legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px}
 .sq{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.ms{position:relative}
+.ms-btn{width:100%;padding:6px 26px 6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.ms-btn::after{content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#666}
+.ms-btn.on{border-color:var(--red);background:#FDECEC;color:var(--red2);font-weight:700}
+.ms-btn:focus{outline:2px solid var(--red)}
+.ms-pan{position:absolute;top:calc(100% + 4px);left:0;z-index:50;min-width:100%;width:max-content;max-width:340px;background:#fff;border:1px solid #CBD0D6;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px}
+.ms-pan input[type=search]{width:100%;padding:5px 8px;border:1px solid #CBD0D6;border-radius:6px;margin-bottom:6px}
+.ms-acts{display:flex;gap:6px;margin-bottom:6px}
+.ms-acts button{flex:1;border:1px solid #CBD0D6;background:#F7F7F8;border-radius:6px;padding:4px 6px;font-size:12px;cursor:pointer;font-weight:600}
+.ms-list{max-height:260px;overflow:auto}
+.ms-list label{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap;text-transform:none;font-weight:400;color:var(--txt);margin:0}
+.ms-list label:hover{background:#F5F5F6}
+.ms-list input{accent-color:var(--red)}
+.ms-foot{font-size:11px;color:var(--muted);margin-top:6px;text-align:right}
+
 </style>
 </head>
 <body>
@@ -101,13 +117,13 @@ textarea{min-height:56px;resize:vertical}
 <div class="wrap">
   <div class="card filters">
     <div class="f"><label for="fData">Data</label><select id="fData"></select></div>
-    <div class="f"><label for="fTec">Tecnologia</label><select id="fTec"></select></div>
-    <div class="f"><label for="fUF">UF</label><select id="fUF"></select></div>
-    <div class="f"><label for="fCN">CN</label><select id="fCN"></select></div>
-    <div class="f"><label for="fMun">Município</label><select id="fMun"></select></div>
-    <div class="f"><label for="fOwn">Cell Owner</label><select id="fOwn"></select></div>
+    <div class="f"><label>Tecnologia</label><div class="ms" id="fTec"></div></div>
+    <div class="f"><label>UF</label><div class="ms" id="fUF"></div></div>
+    <div class="f"><label>CN</label><div class="ms" id="fCN"></div></div>
+    <div class="f"><label>Município</label><div class="ms" id="fMun"></div></div>
+    <div class="f"><label>Cell Owner</label><div class="ms" id="fOwn"></div></div>
     <div class="f"><label for="fBusca">Buscar Station / ERB</label><input id="fBusca" placeholder="3+ letras"></div>
-    <div class="f"><label for="fStat">Tratativa do site</label><select id="fStat"></select></div>
+    <div class="f"><label>Tratativa do site</label><div class="ms" id="fStat"></div></div>
     <div class="chk"><input type="checkbox" id="fAtt" checked><label for="fAtt">Só ≤ 99,60</label></div>
     <div><button type="button" class="btn b-gry" id="btnLimpar" style="width:100%">Limpar</button></div>
   </div>
@@ -223,10 +239,8 @@ function fmtD(d){const x=serialToDate(d);return String(x.getUTCDate()).padStart(
 function ymd(d){const x=serialToDate(d);return x.getUTCFullYear()+String(x.getUTCMonth()+1).padStart(2,"0")+String(x.getUTCDate()).padStart(2,"0");}
 function agoraSerial(){const n=new Date();return (n.getTime()-n.getTimezoneOffset()*60000)/86400000+25569;}
 const f2=x=>isFinite(x)?x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"-";
-/* Agrupamento do 1º quadro = STATION | TECNOLOGIA | ERB */
 const chaveGrupo=(st,tec,erb)=>st.toUpperCase()+"|"+tec.toUpperCase()+"|"+erb.toUpperCase();
 const grupoDe=i=>chaveGrupo(B.st[i],B.tec[i],B.erb[i]);
-/* CHAVE ÚNICA = DATA | STATION_NAME | ERB | VISAO_FILTRO */
 function chaveCel(d,st,erb,vis){if(!(d>0))return"";return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();}
 const chaveLinha=i=>chaveCel(B.day[i],B.st[i],B.erb[i],B.vis[i]);
 const chaveLinhaTrat=row=>chaveCel(diaDe(row[1]),txt(row[4]),txt(row[5]),txt(row[6]));
@@ -244,6 +258,48 @@ function confirmar(tit,msg){return new Promise(res=>{$("mTit").textContent=tit;$
   const fim=v=>{$("modal").classList.add("hide");$("mSim").onclick=null;$("mNao").onclick=null;res(v);};
   $("mSim").onclick=()=>fim(true);$("mNao").onclick=()=>fim(false);});}
 function setStatus(s){$("status").textContent=s;}
+
+/* ======================= MULTISELEÇÃO ======================= */
+/* MS[id] = {vals:[...], sel:Set}  ·  sel vazio = (Todos) */
+const MS={};let msAberto=null,msTimer=null;
+function msCriar(id,vals){
+  const box=$(id);const ant=MS[id]?MS[id].sel:new Set();
+  const sel=new Set([...ant].filter(v=>vals.includes(v)));
+  MS[id]={vals,sel};
+  box.innerHTML="<button type=\"button\" class=\"ms-btn\"></button>";
+  box.querySelector(".ms-btn").addEventListener("click",e=>{e.stopPropagation();msToggle(id);});
+  msBtn(id);
+}
+function msResumo(id){const s=MS[id].sel;if(!s.size)return TODOS;
+  if(s.size<=2)return[...s].join(", ");return s.size+" selecionados";}
+function msBtn(id){const b=$(id).querySelector(".ms-btn");b.textContent=msResumo(id);
+  b.classList.toggle("on",MS[id].sel.size>0);b.title=MS[id].sel.size?[...MS[id].sel].join("\n"):TODOS;}
+function msFechar(){if(!msAberto)return;const p=$(msAberto).querySelector(".ms-pan");if(p)p.remove();msAberto=null;}
+function msToggle(id){if(msAberto===id){msFechar();return;}msFechar();msAberto=id;
+  const box=$(id),M=MS[id];const pan=document.createElement("div");pan.className="ms-pan";
+  pan.innerHTML="<input type=\"search\" placeholder=\"Buscar…\"><div class=\"ms-acts\"><button type=\"button\" data-a=\"all\">Marcar todos</button>"+
+    "<button type=\"button\" data-a=\"none\">Limpar</button></div><div class=\"ms-list\"></div><div class=\"ms-foot\"></div>";
+  box.appendChild(pan);pan.addEventListener("click",e=>e.stopPropagation());
+  const lst=pan.querySelector(".ms-list"),busca=pan.querySelector("input[type=search]"),foot=pan.querySelector(".ms-foot");
+  const desenhar=()=>{const q=busca.value.trim().toUpperCase();
+    const vis=M.vals.filter(v=>!q||v.toUpperCase().indexOf(q)>=0);
+    lst.innerHTML=vis.length?vis.map(v=>"<label><input type=\"checkbox\" value=\""+esc(v)+"\""+(M.sel.has(v)?" checked":"")+">"+esc(v)+"</label>").join(""):"<div style=\"color:#888;padding:4px\">Nada encontrado</div>";
+    foot.textContent=M.sel.size?M.sel.size+" de "+M.vals.length+" marcados":"Nenhum marcado = (Todos)";};
+  desenhar();
+  if(M.vals.length>8)busca.focus();else busca.style.display="none";
+  busca.addEventListener("input",desenhar);
+  lst.addEventListener("change",e=>{const c=e.target;if(c.type!=="checkbox")return;
+    if(c.checked)M.sel.add(c.value);else M.sel.delete(c.value);
+    foot.textContent=M.sel.size?M.sel.size+" de "+M.vals.length+" marcados":"Nenhum marcado = (Todos)";msMudou(id);});
+  pan.querySelector("[data-a=all]").addEventListener("click",()=>{const q=busca.value.trim().toUpperCase();
+    M.vals.filter(v=>!q||v.toUpperCase().indexOf(q)>=0).forEach(v=>M.sel.add(v));desenhar();msMudou(id);});
+  pan.querySelector("[data-a=none]").addEventListener("click",()=>{M.sel.clear();desenhar();msMudou(id);});
+}
+function msMudou(id){msBtn(id);clearTimeout(msTimer);msTimer=setTimeout(aplicarFiltro,250);}
+function msSet(id){const s=MS[id]?MS[id].sel:null;return(s&&s.size)?s:null;}
+function msLimpar(id){if(MS[id]){MS[id].sel.clear();msBtn(id);}}
+document.addEventListener("click",msFechar);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")msFechar();});
 
 Office.onReady(info=>{
   if(info.host!==Office.HostType.Excel){ovl(true,"Abra este painel dentro do Excel.",0);return;}
@@ -314,7 +370,7 @@ async function carregarListas(){
     for(let c=0;c<4;c++){for(let r=1;r<u.values.length;r++){const s=txt(u.values[r][c]);if(!s)break;listas[c].push(s);}}
   });
   [["lCausa",0],["lTMR",1],["lDesc",2],["lStatus",3]].forEach(([id,c])=>{$(id).innerHTML=listas[c].map(s=>"<option value=\""+esc(s)+"\">").join("");});
-  $("fStat").innerHTML=[TODOS,SEM_TRAT,ST_PARCIAL,ST_TRATADO].map(s=>"<option>"+esc(s)+"</option>").join("");
+  msCriar("fStat",[SEM_TRAT,ST_PARCIAL,ST_TRATADO]);
 }
 
 async function garantirTabelaTrat(ctx){
@@ -364,20 +420,24 @@ async function carregarTratativas(sanear){
   return removidas;
 }
 
-function opcoes(sel,vals){sel.innerHTML=[TODOS,...vals].map(s=>"<option value=\""+esc(s)+"\">"+esc(s)+"</option>").join("");}
 function preencherFiltros(){
   const U=(arr,own)=>{const s=new Set();for(let i=0;i<B.n;i++){let x=arr[i];if(own&&!x)x=SEM_OWNER;if(x)s.add(x);}return[...s].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));};
+  const di=$("fData").selectedIndex;
   $("fData").innerHTML=datas.map((d,i)=>"<option value=\""+i+"\">"+fmtD(d)+"</option>").join("");
-  opcoes($("fTec"),U(B.tec));opcoes($("fUF"),U(B.uf));opcoes($("fCN"),U(B.cn));
-  opcoes($("fMun"),U(B.mun));opcoes($("fOwn"),U(B.own,true));
+  if(di>0&&di<datas.length)$("fData").selectedIndex=di;
+  msCriar("fTec",U(B.tec));msCriar("fUF",U(B.uf));msCriar("fCN",U(B.cn));
+  msCriar("fMun",U(B.mun));msCriar("fOwn",U(B.own,true));
 }
-function lerFiltros(){const v=id=>{const x=$(id).value;return x===TODOS?"":x;};
-  return{tec:v("fTec"),uf:v("fUF"),cn:v("fCN"),mun:v("fMun"),own:v("fOwn"),stat:v("fStat"),busca:$("fBusca").value.trim().toUpperCase(),att:$("fAtt").checked};}
+function lerFiltros(){
+  return{tec:msSet("fTec"),uf:msSet("fUF"),cn:msSet("fCN"),mun:msSet("fMun"),own:msSet("fOwn"),stat:msSet("fStat"),
+         busca:$("fBusca").value.trim().toUpperCase(),att:$("fAtt").checked};}
 function passa(i,F){
-  if(F.tec&&B.tec[i]!==F.tec)return false;if(F.uf&&B.uf[i]!==F.uf)return false;
-  if(F.cn&&B.cn[i]!==F.cn)return false;if(F.mun&&B.mun[i]!==F.mun)return false;
-  if(F.own&&(B.own[i]||SEM_OWNER)!==F.own)return false;
+  if(F.tec&&!F.tec.has(B.tec[i]))return false;if(F.uf&&!F.uf.has(B.uf[i]))return false;
+  if(F.cn&&!F.cn.has(B.cn[i]))return false;if(F.mun&&!F.mun.has(B.mun[i]))return false;
+  if(F.own&&!F.own.has(B.own[i]||SEM_OWNER))return false;
   if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0&&B.erb[i].toUpperCase().indexOf(F.busca)<0)return false;return true;}
+function passaStat(stt,F){if(!F.stat)return true;for(const s of F.stat)if(stt.startsWith(s))return true;return false;}
+function txtFiltro(id){return msResumo(id);}
 
 /* ===== QUADRO 1: SITE / ERB ===== */
 function aplicarFiltro(){
@@ -393,7 +453,7 @@ function aplicarFiltro(){
   let nAtt=0,nSem=0;sitesView=[];
   for(const r of m.values()){
     r.stt=statusSite(r.att,r.tA,r.tT);
-    if(F.att&&r.att===0)continue;if(F.stat&&!r.stt.startsWith(F.stat))continue;
+    if(F.att&&r.att===0)continue;if(!passaStat(r.stt,F))continue;
     if(r.att>0){nAtt++;if(r.tA===0)nSem++;}nSetTrat+=r.tT;
     r.med=r.qa?r.soma/r.qa:NaN;if(!r.qa)r.min=NaN;sitesView.push(r);
   }
@@ -569,7 +629,7 @@ async function exportar(){
   }catch(e){toast("Erro ao exportar",e.message||String(e),"err");}
 }
 
-/* ===== EVOLUTIVO (1 linha por STATION + ERB) ===== */
+/* ===== EVOLUTIVO ===== */
 let evol=null;
 function calcEvolutivo(){
   const x=serialToDate(dSel),y=x.getUTCFullYear(),mo=x.getUTCMonth();
@@ -606,8 +666,9 @@ async function evolExcel(){
   for(const s of E.lista){const cn=Number(s.cn);out.push([s.st,s.erb,s.tec,s.uf,(s.cn!==""&&isFinite(cn))?cn:s.cn,s.mun,s.own,s.verm,isNaN(s.media)?"":Math.round(s.media*100)/100,...s.val.map(v=>v===null?"":v)]);}
   try{
     await Excel.run(async ctx=>{
-      const ws=await prepararAba(ctx,ABA_EVOL),F=lerFiltros();
-      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+(F.tec||TODOS)+"  UF: "+(F.uf||TODOS)+"  CN: "+(F.cn||TODOS)+"  Município: "+(F.mun||TODOS)+"  Owner: "+(F.own||TODOS)]];
+      const ws=await prepararAba(ctx,ABA_EVOL);
+      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+txtFiltro("fTec")+"  UF: "+txtFiltro("fUF")+"  CN: "+txtFiltro("fCN")+
+        "  Município: "+txtFiltro("fMun")+"  Owner: "+txtFiltro("fOwn")]];
       ws.getRange("A1").format.font.bold=true;ws.getRange("A1").format.font.size=13;ws.getRange("A1").format.font.color="#548235";
       ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior setor da ERB":"média dos setores da ERB")]];
       const rg=ws.getRangeByIndexes(3,0,n+1,NC);rg.values=out;
@@ -625,9 +686,10 @@ async function evolExcel(){
 }
 
 function ligarEventos(){
-  ["fData","fTec","fUF","fCN","fMun","fOwn","fStat","fAtt"].forEach(id=>$(id).addEventListener("change",aplicarFiltro));
+  ["fData","fAtt"].forEach(id=>$(id).addEventListener("change",aplicarFiltro));
   $("fBusca").addEventListener("input",()=>{const n=$("fBusca").value.trim().length;if(n===0||n>=3)aplicarFiltro();});
-  $("btnLimpar").addEventListener("click",()=>{$("fData").selectedIndex=0;["fTec","fUF","fCN","fMun","fOwn","fStat"].forEach(id=>$(id).selectedIndex=0);$("fBusca").value="";$("fAtt").checked=true;aplicarFiltro();});
+  $("btnLimpar").addEventListener("click",()=>{msFechar();$("fData").selectedIndex=0;["fTec","fUF","fCN","fMun","fOwn","fStat"].forEach(msLimpar);
+    $("fBusca").value="";$("fAtt").checked=true;aplicarFiltro();});
   $("tbSites").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-ix]");if(tr)mostrarSite(+tr.dataset.ix);});
   $("tbCel").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-i]");if(tr)mostrarSetor(+tr.dataset.i);});
   $("btnSalvar").addEventListener("click",salvar);$("btnCancelar").addEventListener("click",cancelar);
