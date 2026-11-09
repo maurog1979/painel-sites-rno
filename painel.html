@@ -5,9 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Sites RNO</title>
-<!-- v6: filtros com SELEÇÃO MÚLTIPLA (Tecnologia, UF, CN, Município, Cell Owner, Tratativa)
-     v5: 1º quadro por STATION + ERB · tratativa por SETOR
-     CHAVE = DATA | STATION_NAME | ERB | VISAO_FILTRO  ·  ANALITICO somente leitura -->
+<!-- v7: TRATATIVA POR STATION (1 aberta por STATION, vale p/ todas as ERBs/tecnologias, visível em qualquer data)
+         Abrir / Atualizar / Concluir · histórico mantido · TRATATIVAS_SITES layout novo (20 col., ID_TRATATIVA)
+         Botões "Copiar setores" e "Copiar setores da STATION" (VISAO_FILTRO, um por linha -> SmartPlan)
+     v6: filtros com SELEÇÃO MÚLTIPLA · v5: 1º quadro por STATION + ERB · ANALITICO somente leitura -->
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 <style>
 :root{--red:#E60000;--red2:#B71C1C;--green:#00964A;--green2:#548235;--orange:#E67800;
@@ -33,8 +34,10 @@ button,select,input,textarea{font-family:inherit;font-size:13px}
 .chk{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12px;padding-bottom:6px}
 .btn{border:none;border-radius:7px;padding:8px 14px;font-weight:700;cursor:pointer}
 .btn:hover{filter:brightness(1.08)} .btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 10px;font-size:12px}
 .b-red{background:var(--red);color:#fff} .b-org{background:var(--orange);color:#fff}
 .b-grn{background:var(--green2);color:#fff} .b-gry{background:#E9EBEE;color:#222}
+.b-ok{background:var(--green);color:#fff}
 .b-out{background:#fff;color:var(--red2);border:1px solid var(--red2)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .kpi{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--red);border-radius:10px;padding:8px 12px}
@@ -55,18 +58,22 @@ tbody tr.sel{background:var(--sel);box-shadow:inset 4px 0 0 var(--red)}
 .p-con{background:#DDF5E6;color:#0B6B33} .p-out{background:#E8EAED;color:#555}
 .av-r{color:var(--red);font-weight:700} .av-g{color:var(--green);font-weight:700}
 .erb{font-family:Consolas,monospace;font-size:12px;color:#333}
-.grid2{display:grid;grid-template-columns:1.25fr .8fr 1.25fr;gap:10px}
+.grid2{display:grid;grid-template-columns:1.15fr .7fr 1.4fr;gap:10px}
 @media (max-width:1100px){.grid2{grid-template-columns:1fr 1fr}}
 @media (max-width:700px){.grid2{grid-template-columns:1fr}}
 .sitehdr{font-weight:700;margin-bottom:8px;padding:6px 10px;border-radius:6px;background:#F7F7F8;font-size:12px}
 .sitehdr.edit{background:#FFF3E0;color:#9A5200;border:1px solid #F5C27A}
 .sitehdr.ok{background:#FDECEC;color:#B71C1C;border:1px solid #F3B5B5}
 .form .row{margin-bottom:7px}
+.form .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:7px}
 .form label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
 .form input,textarea{width:100%;padding:6px 8px;border:1px solid #CBD0D6;border-radius:6px;background:#fff}
+.form input[readonly]{background:#F3F4F6;color:#444}
 .form.off input,.form.off textarea{background:#F3F4F6}
-textarea{min-height:56px;resize:vertical}
+.auto{font-size:11px;background:#F7F7F8;border:1px dashed #CBD0D6;border-radius:6px;padding:6px 8px;margin-bottom:7px;max-height:66px;overflow:auto;color:#444}
+textarea{min-height:52px;resize:vertical}
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.hint{font-size:11px;color:var(--muted);margin-top:4px}
 .status{font-size:12px;color:var(--muted);padding:2px 2px 10px}
 .hide{display:none!important}
 .key{font-family:Consolas,monospace;font-size:11px;color:#555;word-break:break-all}
@@ -77,7 +84,7 @@ textarea{min-height:56px;resize:vertical}
 .bar{width:min(420px,80%);height:10px;background:#EEE;border-radius:6px;overflow:hidden}
 .bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--red2));transition:width .2s}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:95;display:flex;align-items:center;justify-content:center}
-.modal .box{background:#fff;border-radius:12px;padding:18px 20px;max-width:420px;width:90%}
+.modal .box{background:#fff;border-radius:12px;padding:18px 20px;max-width:440px;width:90%}
 .modal .box h3{margin:0 0 8px;color:var(--red2)}
 .heat td.c{text-align:center;font-weight:600;font-size:11px;padding:4px 3px;min-width:42px;color:#fff}
 .heat td.cr{background:var(--red)} .heat td.cg{background:var(--green)} .heat td.ce{background:#fff;color:#bbb}
@@ -99,13 +106,12 @@ textarea{min-height:56px;resize:vertical}
 .ms-list label:hover{background:#F5F5F6}
 .ms-list input{accent-color:var(--red)}
 .ms-foot{font-size:11px;color:var(--muted);margin-top:6px;text-align:right}
-
 </style>
 </head>
 <body>
 <div class="hdr">
   <h1>PAINEL DE DISPONIBILIDADE — SITES QUE MERECEM ATENÇÃO (AVAIL ≤ 99,60)
-    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · Site/ERB → Setor → Tratativa · mesmas tabelas do painel VBA</span></h1>
+    <span class="sub">Operações RNO · Móvel 2G / 3G / 4G / 5G · Site/ERB → Setores → Tratativa da STATION · mesmas tabelas do painel VBA</span></h1>
   <div class="tabs">
     <button type="button" class="tab on" id="tabTrat">Tratativa</button>
     <button type="button" class="tab" id="tabEvol">Evolutivo diário</button>
@@ -113,7 +119,6 @@ textarea{min-height:56px;resize:vertical}
   <div class="usr"><label for="usuario">Usuário</label><input id="usuario" maxlength="40"></div>
   <button type="button" class="btnRel" id="btnRecarregar">⟳ Recarregar base</button>
 </div>
-
 <div class="wrap">
   <div class="card filters">
     <div class="f"><label for="fData">Data</label><select id="fData"></select></div>
@@ -123,19 +128,17 @@ textarea{min-height:56px;resize:vertical}
     <div class="f"><label>Município</label><div class="ms" id="fMun"></div></div>
     <div class="f"><label>Cell Owner</label><div class="ms" id="fOwn"></div></div>
     <div class="f"><label for="fBusca">Buscar Station / ERB</label><input id="fBusca" placeholder="3+ letras"></div>
-    <div class="f"><label>Tratativa do site</label><div class="ms" id="fStat"></div></div>
+    <div class="f"><label>Tratativa da Station</label><div class="ms" id="fStat"></div></div>
     <div class="chk"><input type="checkbox" id="fAtt" checked><label for="fAtt">Só ≤ 99,60</label></div>
     <div><button type="button" class="btn b-gry" id="btnLimpar" style="width:100%">Limpar</button></div>
   </div>
-
   <div id="pgTrat">
     <div class="kpis">
       <div class="kpi k"><div class="v" id="kList">0</div><div class="l">Site/ERB listados</div></div>
       <div class="kpi"><div class="v" id="kAtt">0</div><div class="l">Com setores ≤ 99,60</div></div>
-      <div class="kpi o"><div class="v" id="kSem">0</div><div class="l">Em atenção SEM tratativa</div></div>
-      <div class="kpi g"><div class="v" id="kSet">0</div><div class="l">Setores tratados na data</div></div>
+      <div class="kpi o"><div class="v" id="kSem">0</div><div class="l">Em atenção SEM tratativa aberta</div></div>
+      <div class="kpi g"><div class="v" id="kAb">0</div><div class="l">Tratativas abertas (todas as datas)</div></div>
     </div>
-
     <div class="card" style="margin-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <p class="ttl"><span class="num">1</span><span id="ttlSites">Selecione o SITE / ERB</span></p>
@@ -148,14 +151,18 @@ textarea{min-height:56px;resize:vertical}
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
-
     <div class="grid2" style="margin-top:10px">
       <div class="card">
-        <p class="ttl"><span class="num">2</span>Selecione o SETOR (somente a data escolhida)</p>
+        <p class="ttl"><span class="num">2</span>Setores do SITE / ERB na data</p>
         <div class="sitehdr" id="siteHdr">Selecione um site/ERB no quadro 1.</div>
-        <div class="tblw" style="max-height:290px">
-          <table id="tbCel"><thead><tr><th>Célula (ERB)</th><th>Setor (VISAO_FILTRO)</th><th class="n">Avail</th><th>Tratativa</th></tr></thead><tbody></tbody></table>
+        <div class="tblw" style="max-height:240px">
+          <table id="tbCel"><thead><tr><th>Célula (ERB)</th><th>Setor (VISAO_FILTRO)</th><th class="n">Avail</th><th>Atenção</th></tr></thead><tbody></tbody></table>
         </div>
+        <div class="acts">
+          <button type="button" class="btn b-out sm" id="btnCopSet" disabled>Copiar setores</button>
+          <button type="button" class="btn b-out sm" id="btnCopSt" disabled>Copiar setores da STATION</button>
+        </div>
+        <div class="hint">VISAO_FILTRO, um por linha — cole no SmartPlan com Ctrl+V.</div>
       </div>
       <div class="card">
         <p class="ttl">Histórico da ERB (30 dias)</p>
@@ -164,22 +171,25 @@ textarea{min-height:56px;resize:vertical}
         </div>
       </div>
       <div class="card form off" id="formTrat">
-        <p class="ttl"><span class="num">3</span>Tratativa do setor</p>
-        <div class="sitehdr" id="setorHdr">Selecione o site/ERB (1) e o setor (2).</div>
+        <p class="ttl"><span class="num">3</span>Tratativa da STATION</p>
+        <div class="sitehdr" id="tratHdr">Selecione um site/ERB no quadro 1.</div>
+        <div class="row2">
+          <div><label for="tDataAb">Data abertura</label><input type="date" id="tDataAb" disabled></div>
+          <div><label for="tAbPor">Aberto por</label><input id="tAbPor" readonly></div>
+        </div>
+        <div class="auto" id="autoBox">A tratativa é por STATION (vale para todas as ERBs/tecnologias) e aparece em qualquer data.</div>
         <div class="row"><label for="tCausa">Causa Disponibilidade</label><input id="tCausa" list="lCausa" disabled><datalist id="lCausa"></datalist></div>
         <div class="row"><label for="tTMR">Causa TMR</label><input id="tTMR" list="lTMR" disabled><datalist id="lTMR"></datalist></div>
         <div class="row"><label for="tDesc">Descrição da Falha</label><input id="tDesc" list="lDesc" disabled><datalist id="lDesc"></datalist></div>
-        <div class="row"><label for="tStatus">Status</label><input id="tStatus" list="lStatus" disabled><datalist id="lStatus"></datalist></div>
         <div class="row"><label for="tObs">Observação</label><textarea id="tObs" disabled></textarea></div>
         <div class="acts">
-          <button type="button" class="btn b-red" id="btnSalvar" disabled>Salvar tratativa</button>
-          <button type="button" class="btn b-out" id="btnCancelar" disabled>Cancelar tratativa</button>
+          <button type="button" class="btn b-red" id="btnSalvar" disabled>Abrir tratativa</button>
+          <button type="button" class="btn b-ok" id="btnConcluir" disabled>Concluir tratativa</button>
         </div>
-        <div class="key" id="chaveTxt" style="margin-top:6px"></div>
+        <div class="key" id="histTxt" style="margin-top:6px"></div>
       </div>
     </div>
   </div>
-
   <div id="pgEvol" class="hide">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
@@ -196,36 +206,38 @@ textarea{min-height:56px;resize:vertical}
       <div class="tblw heat" style="max-height:70vh;margin-top:8px"><table id="tbEvol"><thead></thead><tbody></tbody></table></div>
     </div>
   </div>
-
   <div class="status" id="status">Aguardando o Excel...</div>
 </div>
-
 <div class="ovl" id="ovl"><div style="font-weight:700;color:var(--red2)" id="ovlTxt">Carregando…</div><div class="bar"><div id="ovlBar"></div></div></div>
 <div id="toastBox"></div>
 <div class="modal hide" id="modal"><div class="box"><h3 id="mTit"></h3><div id="mTxt" style="white-space:pre-line;margin-bottom:14px"></div>
-  <div class="acts" style="justify-content:flex-end"><button type="button" class="btn b-gry" id="mNao">Não</button><button type="button" class="btn b-red" id="mSim">Sim, cancelar</button></div></div></div>
-
+  <div class="acts" style="justify-content:flex-end"><button type="button" class="btn b-gry" id="mNao">Não</button><button type="button" class="btn b-red" id="mSim">Sim</button></div></div></div>
+<div class="modal hide" id="mCopia"><div class="box"><h3>Copiar setores</h3>
+  <div style="margin-bottom:8px">Não foi possível copiar automaticamente. O texto já está selecionado: pressione <b>Ctrl+C</b>.</div>
+  <textarea id="mCopiaTxt" style="width:100%;min-height:170px"></textarea>
+  <div class="acts" style="justify-content:flex-end"><button type="button" class="btn b-red" id="mCopiaOk">Fechar</button></div></div></div>
 <script>
 "use strict";
 const TABELA_BASE="ANALITICO",TABELA_TRAT="TRATATIVAS_SITES",ABA_TRAT="TRATATIVAS_SITES",
       ABA_LISTAS="LISTAS_TRATATIVA",ABA_EXPORT="EXPORT_SITES",ABA_EVOL="EVOLUTIVO_SITES";
 const LIMITE=99.6,LIMITE_SLA4H=83.33,TODOS="(Todos)",SEM_OWNER="(sem owner)",SEM_TRAT="Sem tratativa",
-      ST_PARCIAL="Parcial",ST_TRATADO="Tratado";
+      ST_ABERTA="Aberta",ST_CONCLUIDA="Concluída",STT_AND="Em andamento",STT_CONC="Concluído",CAB_ID="ID_TRATATIVA";
 const MAX_HIST=30,CHUNK=60000;
-const CAB_TRAT=["CELL OWNER","DATA","UF","CN","Station","CELULA","GNODEB","AVAIL","Causa Disponibilidade","Causa TMR",
-                "Descrição da Falha","Status","TECNOLOGIA","Observação","Atualizado em","Usuário","CHAVE"];
-const NCOL_TRAT=17;
+const CAB_TRAT=["ID_TRATATIVA","STATION","UF","CN","MUNICÍPIO","CELL OWNER","STATUS","DATA ABERTURA","ABERTO POR",
+  "CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO","AVAIL MÍN ABERTURA","QTD SETORES AFETADOS",
+  "SETORES AFETADOS","DATA CONCLUSÃO","CONCLUÍDO POR","ATUALIZADO EM","ATUALIZADO POR"];
+const NCOL_TRAT=20;
+const TC={ID:0,ST:1,UF:2,CN:3,MUN:4,OWN:5,STATUS:6,DTAB:7,ABPOR:8,CAUSA:9,TMR:10,DESC:11,OBS:12,AVMIN:13,QTD:14,SET:15,DTCONC:16,CONCPOR:17,ATUEM:18,ATUPOR:19};
 const LISTAS_PADRAO=[
   ["Atividade Programada","Falha de Hardware","Falha no atendimento HIGHLINE","Falha no atendimento STTE","Falha TX FO","Vandalismo"],
   ["Recuperado dentro do SLA de 4H","Falta de Recurso OMR","Demora no atendimento HIGHLINE","Acesso de Terceiros","Vandalismo"],
   ["AMIA","Em recuperação","Falha TX FO","Instalação de BB","Normalizado sem intervenção","Recuperado pela HIGHLINE","Retorno de AC","Setor remoto fora","Site fora","Site oscilando"],
-  ["Em andamento","Concluído"]];
-
+  [STT_AND,STT_CONC]];
 const B={n:0,day:null,av:null,tec:[],uf:[],cn:[],mun:[],own:[],st:[],erb:[],vis:[]};
-let grp=new Map(),dayIdx=new Map(),datas=[],trat=new Map(),listas=[[],[],[],[]];
-let dSel=0,sitesView=[],siteSel=null,setorSel=-1;
+let grp=new Map(),dayIdx=new Map(),datas=[],listas=[[],[],[],[]];
+let ab=new Map(),conc=new Map(),abDup=0;
+let dSel=0,sitesView=[],siteSel=null;
 const $=id=>document.getElementById(id);
-
 const txt=v=>(v===null||v===undefined)?"":String(v).trim();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function diaDe(v){if(v===null||v===undefined||v==="")return 0;if(typeof v==="number")return Math.floor(v);
@@ -235,32 +247,36 @@ function diaDe(v){if(v===null||v===undefined||v==="")return 0;if(typeof v==="num
 function numDe(v){if(typeof v==="number")return v;const s=txt(v);if(!s||s.toLowerCase()==="null")return NaN;
   let n=Number(s);if(isFinite(n))return n;n=Number(s.replace(",","."));return isFinite(n)?n:NaN;}
 function serialToDate(d){return new Date(Date.UTC(1899,11,30)+d*86400000);}
-function fmtD(d){const x=serialToDate(d);return String(x.getUTCDate()).padStart(2,"0")+"/"+String(x.getUTCMonth()+1).padStart(2,"0")+"/"+x.getUTCFullYear();}
-function ymd(d){const x=serialToDate(d);return x.getUTCFullYear()+String(x.getUTCMonth()+1).padStart(2,"0")+String(x.getUTCDate()).padStart(2,"0");}
+function fmtD(d){if(!(d>0))return"-";const x=serialToDate(d);return String(x.getUTCDate()).padStart(2,"0")+"/"+String(x.getUTCMonth()+1).padStart(2,"0")+"/"+x.getUTCFullYear();}
+function fmtDM(d){const x=serialToDate(d);return String(x.getUTCDate()).padStart(2,"0")+"/"+String(x.getUTCMonth()+1).padStart(2,"0");}
+function serialToIso(d){if(!(d>0))return"";return serialToDate(d).toISOString().slice(0,10);}
+function isoToSerial(s){const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return 0;
+  return Math.round((Date.UTC(+m[1],+m[2]-1,+m[3])-Date.UTC(1899,11,30))/86400000);}
 function agoraSerial(){const n=new Date();return (n.getTime()-n.getTimezoneOffset()*60000)/86400000+25569;}
+function carimbo(){const n=new Date(),p=x=>String(x).padStart(2,"0");
+  return n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds());}
 const f2=x=>isFinite(x)?x.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"-";
 const chaveGrupo=(st,tec,erb)=>st.toUpperCase()+"|"+tec.toUpperCase()+"|"+erb.toUpperCase();
 const grupoDe=i=>chaveGrupo(B.st[i],B.tec[i],B.erb[i]);
-function chaveCel(d,st,erb,vis){if(!(d>0))return"";return ymd(d)+"|"+String(st||"").trim().toUpperCase()+"|"+String(erb||"").trim().toUpperCase()+"|"+String(vis||"").trim().toUpperCase();}
-const chaveLinha=i=>chaveCel(B.day[i],B.st[i],B.erb[i],B.vis[i]);
-const chaveLinhaTrat=row=>chaveCel(diaDe(row[1]),txt(row[4]),txt(row[5]),txt(row[6]));
 function fill(r,c,v){return Array.from({length:r},()=>Array(c).fill(v));}
-function pillCls(s){if(!s||s==="-")return"p-out";if(s.startsWith(SEM_TRAT))return"p-sem";const u=s.toUpperCase();
-  if(u.startsWith("TRATADO")||u.startsWith("CONCL"))return"p-con";return"p-and";}
-function statusSite(att,tA,tT){if(tT===0)return SEM_TRAT;if(att===0)return ST_TRATADO+" ("+tT+")";
-  return(tA>=att?ST_TRATADO:ST_PARCIAL)+" "+tA+"/"+att;}
-
+const ehConcluido=s=>txt(s).toUpperCase().startsWith("CONCLU");
+function pillCls(s){if(!s||s==="-")return"p-out";if(s.startsWith(SEM_TRAT))return"p-sem";
+  if(s.startsWith(ST_ABERTA))return"p-and";if(s.startsWith(ST_CONCLUIDA))return"p-con";return"p-out";}
+function statusStation(st){const k=String(st).toUpperCase();const a=ab.get(k);
+  if(a)return a.dtAb>0?ST_ABERTA+" ("+fmtDM(a.dtAb)+")":ST_ABERTA;
+  if(conc.has(k))return ST_CONCLUIDA;return SEM_TRAT;}
+function usuarioAtual(){return $("usuario").value.trim()||"HTML";}
 function ovl(on,t,p){$("ovl").classList.toggle("hide",!on);if(t)$("ovlTxt").textContent=t;if(p!==undefined)$("ovlBar").style.width=Math.round(p*100)+"%";}
 function toast(tit,msg,tipo){const d=document.createElement("div");d.className="toast "+(tipo||"");
   d.innerHTML="<b>"+esc(tit)+"</b><div style='white-space:pre-line'>"+esc(msg)+"</div>";$("toastBox").appendChild(d);
   setTimeout(()=>d.remove(),tipo==="err"?9000:6000);}
-function confirmar(tit,msg){return new Promise(res=>{$("mTit").textContent=tit;$("mTxt").textContent=msg;$("modal").classList.remove("hide");
+function confirmar(tit,msg,rotSim){return new Promise(res=>{$("mTit").textContent=tit;$("mTxt").textContent=msg;$("mSim").textContent=rotSim||"Sim";
+  $("modal").classList.remove("hide");
   const fim=v=>{$("modal").classList.add("hide");$("mSim").onclick=null;$("mNao").onclick=null;res(v);};
   $("mSim").onclick=()=>fim(true);$("mNao").onclick=()=>fim(false);});}
 function setStatus(s){$("status").textContent=s;}
 
 /* ======================= MULTISELEÇÃO ======================= */
-/* MS[id] = {vals:[...], sel:Set}  ·  sel vazio = (Todos) */
 const MS={};let msAberto=null,msTimer=null;
 function msCriar(id,vals){
   const box=$(id);const ant=MS[id]?MS[id].sel:new Set();
@@ -308,19 +324,18 @@ Office.onReady(info=>{
   try{Office.context.document.settings.set("Office.AutoShowTaskpaneWithDocument",true);Office.context.document.settings.saveAsync();}catch(e){}
   ligarEventos();carregarTudo();
 });
-
 async function carregarTudo(){
   try{
     ovl(true,"Lendo a tabela ANALITICO…",0);
     await carregarBase();
     ovl(true,"Lendo listas e tratativas…",0.97);
     await carregarListas();
-    const dup=await carregarTratativas(true);
+    await carregarTratativas();
     preencherFiltros();ovl(false);aplicarFiltro();
-    if(dup>0)toast("Tratativas repetidas removidas",dup+" linha(s) repetida(s) removida(s) da aba "+ABA_TRAT+" (o ANALITICO não é alterado).","wrn");
+    if(abDup>0)toast("Tratativas abertas repetidas",abDup+" tratativa(s) ABERTA(S) a mais para a mesma STATION na aba "+ABA_TRAT+
+      ".\nO painel considera a de DATA ABERTURA mais recente. Conclua ou corrija as repetidas.","wrn");
   }catch(e){ovl(false);toast("Erro ao carregar",e.message||String(e),"err");setStatus("Erro: "+(e.message||e));}
 }
-
 async function carregarBase(){
   await Excel.run(async ctx=>{
     const t=ctx.workbook.tables.getItemOrNullObject(TABELA_BASE);await ctx.sync();
@@ -355,7 +370,6 @@ async function carregarBase(){
   datas=[...dayIdx.keys()].sort((a,b)=>b-a);
   if(!datas.length)throw new Error("A coluna DATA do ANALITICO não possui datas válidas.");
 }
-
 async function carregarListas(){
   await Excel.run(async ctx=>{
     let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_LISTAS);await ctx.sync();
@@ -369,55 +383,78 @@ async function carregarListas(){
     listas=[[],[],[],[]];
     for(let c=0;c<4;c++){for(let r=1;r<u.values.length;r++){const s=txt(u.values[r][c]);if(!s)break;listas[c].push(s);}}
   });
-  [["lCausa",0],["lTMR",1],["lDesc",2],["lStatus",3]].forEach(([id,c])=>{$(id).innerHTML=listas[c].map(s=>"<option value=\""+esc(s)+"\">").join("");});
-  msCriar("fStat",[SEM_TRAT,ST_PARCIAL,ST_TRATADO]);
+  [["lCausa",0],["lTMR",1],["lDesc",2]].forEach(([id,c])=>{$(id).innerHTML=listas[c].map(s=>"<option value=\""+esc(s)+"\">").join("");});
+  msCriar("fStat",[ST_ABERTA,SEM_TRAT,ST_CONCLUIDA]);
 }
 
+/* ===== TRATATIVAS_SITES (layout v7/v11: 1 linha por tratativa de STATION) ===== */
+async function criarTabelaTrat(ctx,ws){
+  ws.getRange("A1:T1").values=[CAB_TRAT];
+  const t=ws.tables.add(ABA_TRAT+"!A1:T2",true);t.name=TABELA_TRAT;
+  const h=t.getHeaderRowRange();h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
+  ws.getRange("A:T").format.columnWidth=80;ws.getRange("A:A").format.columnWidth=170;ws.getRange("J:L").format.columnWidth=170;
+  ws.getRange("M:M").format.columnWidth=220;ws.getRange("P:P").format.columnWidth=320;
+  await ctx.sync();return t;
+}
 async function garantirTabelaTrat(ctx){
   let t=ctx.workbook.tables.getItemOrNullObject(TABELA_TRAT);await ctx.sync();
   if(!t.isNullObject){
-    const cols=t.columns.load("count");await ctx.sync();
-    for(let c=cols.count;c<NCOL_TRAT;c++)t.columns.add(null,null,CAB_TRAT[c]);
-    if(cols.count<NCOL_TRAT)await ctx.sync();
+    const h=t.getHeaderRowRange().load("values,columnCount");await ctx.sync();
+    if(!(h.columnCount>=NCOL_TRAT&&txt(h.values[0][0]).toUpperCase()===CAB_ID))
+      throw new Error("A tabela "+TABELA_TRAT+" está no layout antigo. Clique em 'Recarregar base' para recriá-la.");
     return t;
   }
   let ws=ctx.workbook.worksheets.getItemOrNullObject(ABA_TRAT);await ctx.sync();
   if(ws.isNullObject)ws=ctx.workbook.worksheets.add(ABA_TRAT);
   else{const u=ws.getUsedRangeOrNullObject(true);await ctx.sync();
-    if(!u.isNullObject)throw new Error("A aba '"+ABA_TRAT+"' tem dados mas não tem a tabela '"+TABELA_TRAT+"'.");}
-  ws.getRange("A1:Q1").values=[CAB_TRAT];
-  t=ws.tables.add(ABA_TRAT+"!A1:Q2",true);t.name=TABELA_TRAT;
-  const h=t.getHeaderRowRange();h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
-  await ctx.sync();return t;
+    if(!u.isNullObject)throw new Error("A aba '"+ABA_TRAT+"' tem dados mas não tem a tabela '"+TABELA_TRAT+"'. Apague o conteúdo (são testes) e recarregue.");}
+  return await criarTabelaTrat(ctx,ws);
 }
-
-async function carregarTratativas(sanear){
-  let removidas=0;
+function lerTratativas(values){
+  ab=new Map();conc=new Map();abDup=0;
+  for(const row of values){
+    const st=txt(row[TC.ST]).toUpperCase();if(!st||!txt(row[TC.ID]))continue;
+    if(ehConcluido(row[TC.STATUS])){
+      const c=conc.get(st)||{n:0,dt:0,causa:""};c.n++;const d=diaDe(row[TC.DTCONC]);
+      if(d>=c.dt){c.dt=d;c.causa=txt(row[TC.CAUSA]);}conc.set(st,c);
+    }else{
+      const a={id:txt(row[TC.ID]),dtAb:diaDe(row[TC.DTAB]),abPor:txt(row[TC.ABPOR]),causa:txt(row[TC.CAUSA]),tmr:txt(row[TC.TMR]),
+               desc:txt(row[TC.DESC]),obs:txt(row[TC.OBS]),avMin:numDe(row[TC.AVMIN]),qtd:Number(row[TC.QTD])||0,setores:txt(row[TC.SET])};
+      if(ab.has(st)){abDup++;if(a.dtAb>=ab.get(st).dtAb)ab.set(st,a);}else ab.set(st,a);
+    }
+  }
+}
+async function lerTabelaTrat(){
+  await Excel.run(async ctx=>{const t=await garantirTabelaTrat(ctx);const b=t.getDataBodyRange().load("values");await ctx.sync();lerTratativas(b.values);});
+}
+async function carregarTratativas(){
+  let antigo=false;
   await Excel.run(async ctx=>{
-    const t=await garantirTabelaTrat(ctx);
-    const body=t.getDataBodyRange().load("values");await ctx.sync();
-    const v=body.values,n=v.length;
-    if(sanear&&n>0){
-      const chaves=[],apagar=new Array(n).fill(false),mk=new Map();
-      for(let r=0;r<n;r++){
-        if(txt(v[r][4])&&diaDe(v[r][1])>0){
-          const k=chaveLinhaTrat(v[r]);chaves.push([k]);
-          if(mk.has(k)){const r0=mk.get(k);if((+v[r][14]||0)>=(+v[r0][14]||0)){apagar[r0]=true;mk.set(k,r);}else apagar[r]=true;}
-          else mk.set(k,r);
-        }else chaves.push([""]);
-      }
-      t.columns.getItemAt(16).getDataBodyRange().values=chaves;await ctx.sync();
-      for(let r=n-1;r>=0;r--)if(apagar[r]){t.rows.getItemAt(r).delete();removidas++;}
-      await ctx.sync();
-    }
-    const b2=t.getDataBodyRange().load("values");await ctx.sync();
-    trat=new Map();
-    for(const row of b2.values){
-      if(txt(row[4])&&diaDe(row[1])>0)
-        trat.set(chaveLinhaTrat(row),{causa:txt(row[8]),tmr:txt(row[9]),desc:txt(row[10]),status:txt(row[11]),obs:txt(row[13])});
-    }
+    const t=ctx.workbook.tables.getItemOrNullObject(TABELA_TRAT);await ctx.sync();
+    if(!t.isNullObject){const h=t.getHeaderRowRange().load("values,columnCount");await ctx.sync();
+      antigo=!(h.columnCount>=NCOL_TRAT&&txt(h.values[0][0]).toUpperCase()===CAB_ID);}
   });
-  return removidas;
+  if(antigo){
+    ovl(false);
+    const ok=await confirmar("Recriar TRATATIVAS_SITES","A tabela "+TABELA_TRAT+" está no LAYOUT ANTIGO (tratativa por SETOR).\n\n"+
+      "Como as tratativas atuais são apenas TESTES, elas serão DESCARTADAS e a tabela será recriada no layout novo (tratativa por STATION).\n\nContinuar?","Sim, recriar");
+    if(!ok)throw new Error("TRATATIVAS_SITES está no layout antigo. O painel precisa do layout novo para gravar tratativas.");
+    ovl(true,"Recriando TRATATIVAS_SITES…",0.98);
+    await Excel.run(async ctx=>{
+      const t=ctx.workbook.tables.getItem(TABELA_TRAT);const ws=t.worksheet;
+      t.delete();await ctx.sync();ws.getRange().clear();await ctx.sync();await criarTabelaTrat(ctx,ws);
+    });
+    toast("TRATATIVAS_SITES recriada","Layout novo: 1 linha por tratativa de STATION.");
+  }
+  await lerTabelaTrat();
+}
+async function formatarTrat(ctx,t){
+  const b=t.getDataBodyRange().load("rowCount");await ctx.sync();const n=b.rowCount;
+  t.columns.getItemAt(TC.DTAB).getDataBodyRange().numberFormat=fill(n,1,"dd/mm/yyyy");
+  t.columns.getItemAt(TC.AVMIN).getDataBodyRange().numberFormat=fill(n,1,"0.00");
+  t.columns.getItemAt(TC.DTCONC).getDataBodyRange().numberFormat=fill(n,1,"dd/mm/yyyy hh:mm");
+  t.columns.getItemAt(TC.ATUEM).getDataBodyRange().numberFormat=fill(n,1,"dd/mm/yyyy hh:mm");
+  await ctx.sync();
 }
 
 function preencherFiltros(){
@@ -437,65 +474,63 @@ function passa(i,F){
   if(F.own&&!F.own.has(B.own[i]||SEM_OWNER))return false;
   if(F.busca&&B.st[i].toUpperCase().indexOf(F.busca)<0&&B.erb[i].toUpperCase().indexOf(F.busca)<0)return false;return true;}
 function passaStat(stt,F){if(!F.stat)return true;for(const s of F.stat)if(stt.startsWith(s))return true;return false;}
-function txtFiltro(id){return msResumo(id);}
 
 /* ===== QUADRO 1: SITE / ERB ===== */
 function aplicarFiltro(){
   if(!B.n)return;
-  dSel=datas[+$("fData").value||0];const F=lerFiltros();const m=new Map();let nSetTrat=0;
+  dSel=datas[+$("fData").value||0];const F=lerFiltros();const m=new Map();
   for(const i of(dayIdx.get(dSel)||[])){
     if(!passa(i,F))continue;
     const k=grupoDe(i);let r=m.get(k);
-    if(!r){r={st:B.st[i],erb:B.erb[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0,tA:0,tT:0};m.set(k,r);}
-    r.qc++;const tr=trat.has(chaveLinha(i));if(tr)r.tT++;
-    const a=B.av[i];if(!isNaN(a)){if(a<r.min)r.min=a;r.soma+=a;r.qa++;if(a<=LIMITE){r.att++;if(tr)r.tA++;}}
+    if(!r){r={st:B.st[i],erb:B.erb[i],tec:B.tec[i],uf:B.uf[i],cn:B.cn[i],mun:B.mun[i],own:B.own[i]||SEM_OWNER,min:Infinity,soma:0,qa:0,qc:0,att:0};m.set(k,r);}
+    r.qc++;const a=B.av[i];if(!isNaN(a)){if(a<r.min)r.min=a;r.soma+=a;r.qa++;if(a<=LIMITE)r.att++;}
   }
   let nAtt=0,nSem=0;sitesView=[];
   for(const r of m.values()){
-    r.stt=statusSite(r.att,r.tA,r.tT);
+    r.stt=statusStation(r.st);
     if(F.att&&r.att===0)continue;if(!passaStat(r.stt,F))continue;
-    if(r.att>0){nAtt++;if(r.tA===0)nSem++;}nSetTrat+=r.tT;
+    if(r.att>0){nAtt++;if(!r.stt.startsWith(ST_ABERTA))nSem++;}
     r.med=r.qa?r.soma/r.qa:NaN;if(!r.qa)r.min=NaN;sitesView.push(r);
   }
   sitesView.sort((a,b)=>((isNaN(a.min)?1000:a.min)-(isNaN(b.min)?1000:b.min))||a.st.localeCompare(b.st)||a.erb.localeCompare(b.erb));
   $("kList").textContent=sitesView.length.toLocaleString("pt-BR");$("kAtt").textContent=nAtt.toLocaleString("pt-BR");
-  $("kSem").textContent=nSem.toLocaleString("pt-BR");$("kSet").textContent=nSetTrat.toLocaleString("pt-BR");
+  $("kSem").textContent=nSem.toLocaleString("pt-BR");$("kAb").textContent=ab.size.toLocaleString("pt-BR");
   $("ttlSites").textContent="Selecione o SITE / ERB · "+fmtD(dSel)+" · do pior AVAIL para o melhor";
   renderSites();limparDetalhe();
   setStatus("Passo 1: selecione um SITE/ERB.  (Base: "+B.n.toLocaleString("pt-BR")+" linhas no ANALITICO)");
   if(!$("pgEvol").classList.contains("hide"))renderEvolutivo();
 }
 function avCls(x){return isNaN(x)?"":(x<=LIMITE?"av-r":"av-g");}
-function linhaSite(r,ix){return"<tr class=\"clk\" data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td class=\"erb\">"+esc(r.erb)+"</td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
+function linhaSite(r,ix){return"<tr class=\"clk"+(r===siteSel?" sel":"")+"\" data-ix=\""+ix+"\"><td><b>"+esc(r.st)+"</b></td><td class=\"erb\">"+esc(r.erb)+"</td><td>"+esc(r.tec)+"</td><td>"+esc(r.uf)+"</td><td>"+esc(r.cn)+"</td><td>"+esc(r.mun)+
   "</td><td>"+esc(r.own)+"</td><td class=\"n "+avCls(r.min)+"\">"+f2(r.min)+"</td><td class=\"n "+avCls(r.med)+"\">"+f2(r.med)+
   "</td><td class=\"n\">"+r.qc+"</td><td class=\"n\">"+r.att+"</td><td><span class=\"pill "+pillCls(r.stt)+"\">"+esc(r.stt)+"</span></td></tr>";}
 function renderSites(){
   $("tbSites").tBodies[0].innerHTML=sitesView.map(linhaSite).join("")||"<tr><td colspan=\"12\" style=\"color:#888;padding:14px\">Nenhum site para os filtros.</td></tr>";
 }
-function atualizarLinhaSite(){
-  const r=siteSel;if(!r)return;let att=0,tA=0,tT=0;
-  for(const i of(grp.get(chaveGrupo(r.st,r.tec,r.erb))||[])){if(B.day[i]!==dSel)continue;const tr=trat.has(chaveLinha(i));if(tr)tT++;
-    const a=B.av[i];if(!isNaN(a)&&a<=LIMITE){att++;if(tr)tA++;}}
-  r.tA=tA;r.tT=tT;r.stt=statusSite(att,tA,tT);
-  const ix=sitesView.indexOf(r);const tr=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");
-  if(tr){tr.outerHTML=linhaSite(r,ix);const n=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");if(n)n.classList.add("sel");}
+function atualizarStatusStation(st){
+  const U=st.toUpperCase(),novo=statusStation(st);
+  sitesView.forEach((r,ix)=>{if(r.st.toUpperCase()!==U)return;r.stt=novo;
+    const tr=$("tbSites").tBodies[0].querySelector("tr[data-ix=\""+ix+"\"]");if(tr)tr.outerHTML=linhaSite(r,ix);});
+  $("kAb").textContent=ab.size.toLocaleString("pt-BR");
 }
-
-const CAMPOS=["tCausa","tTMR","tDesc","tStatus","tObs"];
-function formAtivo(on){CAMPOS.forEach(id=>$(id).disabled=!on);$("formTrat").classList.toggle("off",!on);$("btnSalvar").disabled=!on;}
-function limparForm(){
-  setorSel=-1;CAMPOS.forEach(id=>$(id).value="");formAtivo(false);
-  $("btnSalvar").textContent="Salvar tratativa";$("btnSalvar").className="btn b-red";$("btnCancelar").disabled=true;
-  $("setorHdr").className="sitehdr";$("setorHdr").textContent=siteSel?"Passo 2: selecione o SETOR no quadro 2.":"Selecione o site/ERB (1) e o setor (2).";
-  $("chaveTxt").textContent="";
-}
-function limparDetalhe(){siteSel=null;$("tbCel").tBodies[0].innerHTML="";$("tbHist").tBodies[0].innerHTML="";
-  $("siteHdr").textContent="Selecione um site/ERB no quadro 1.";limparForm();}
+function atualizarTodosStatus(){sitesView.forEach(r=>{r.stt=statusStation(r.st);});renderSites();$("kAb").textContent=ab.size.toLocaleString("pt-BR");}
 
 /* ===== QUADRO 2: SETORES DA ERB NA DATA ===== */
 function setoresDoSite(r){
   const cel=(grp.get(chaveGrupo(r.st,r.tec,r.erb))||[]).filter(i=>B.day[i]===dSel);
   cel.sort((a,b)=>(isNaN(B.av[a])?1000:B.av[a])-(isNaN(B.av[b])?1000:B.av[b]));return cel;}
+/* VISAO_FILTRO da STATION na data (todas as ERBs/tecnologias). soAtt = só AVAIL <= 99,6 */
+function setoresStation(st,d,soAtt){
+  const U=st.toUpperCase(),m=new Map();let mn=Infinity;
+  for(const i of(dayIdx.get(d)||[])){
+    if(B.st[i].toUpperCase()!==U)continue;const a=B.av[i];if(!isNaN(a)&&a<mn)mn=a;
+    if(soAtt&&!(!isNaN(a)&&a<=LIMITE))continue;const v=B.vis[i];if(!v)continue;
+    const key=(B.tec[i]+"|"+B.erb[i]+"|"+v).toUpperCase();if(!m.has(key))m.set(key,v);
+  }
+  const vis=new Set(),lista=[];
+  [...m.keys()].sort().forEach(kk=>{const v=m.get(kk);if(!vis.has(v)){vis.add(v);lista.push(v);}});
+  return{lista,min:isFinite(mn)?mn:NaN};
+}
 function mostrarSite(ix){
   const r=sitesView[ix];if(!r)return;siteSel=r;
   [...$("tbSites").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.ix===ix));
@@ -504,98 +539,152 @@ function mostrarSite(ix){
     const d=B.day[i];if(d<=0)continue;let h=H.get(d);if(!h){h={min:Infinity,s:0,q:0,att:0};H.set(d,h);}
     const a=B.av[i];if(!isNaN(a)){if(a<h.min)h.min=a;h.s+=a;h.q++;if(a<=LIMITE)h.att++;}
   }
-  const cel=setoresDoSite(r);renderSetores(cel);
+  const cel=setoresDoSite(r);
+  $("tbCel").tBodies[0].innerHTML=cel.map(i=>{const at=!isNaN(B.av[i])&&B.av[i]<=LIMITE;
+    return"<tr><td>"+esc(B.erb[i])+"</td><td><b>"+esc(B.vis[i])+"</b></td><td class=\"n "+avCls(B.av[i])+"\">"+f2(B.av[i])+
+      "</td><td><span class=\"pill "+(at?"p-sem":"p-out")+"\">"+(at?"SIM":"-")+"</span></td></tr>";}).join("")||"<tr><td colspan=\"4\" style=\"color:#888\">Sem setores na data.</td></tr>";
   const dias=[...H.keys()].sort((a,b)=>b-a).slice(0,MAX_HIST);
   $("tbHist").tBodies[0].innerHTML=dias.map(d=>{const h=H.get(d);const mn=h.q?h.min:NaN,md=h.q?h.s/h.q:NaN;
     return"<tr"+(d===dSel?" class=\"sel\"":"")+"><td>"+fmtD(d)+"</td><td class=\"n "+avCls(mn)+"\">"+f2(mn)+"</td><td class=\"n "+avCls(md)+"\">"+f2(md)+"</td><td class=\"n\">"+h.att+"</td></tr>";}).join("");
   const nAtt=cel.filter(i=>!isNaN(B.av[i])&&B.av[i]<=LIMITE).length;
   $("siteHdr").textContent=r.st+" · "+r.erb+" · "+r.tec+" · "+r.mun+"/"+r.uf+" · "+fmtD(dSel)+" · "+cel.length+" setor(es), "+nAtt+" ≤ 99,60";
-  limparForm();
-  setStatus("Site "+r.st+" / ERB "+r.erb+" selecionado. Passo 2: selecione o SETOR (VISAO_FILTRO).");
-}
-function stSetor(i){const t=trat.get(chaveLinha(i));if(t)return t.status||"Registrado";const a=B.av[i];return(!isNaN(a)&&a<=LIMITE)?SEM_TRAT:"-";}
-function renderSetores(cel){
-  $("tbCel").tBodies[0].innerHTML=cel.map(i=>{const s=stSetor(i);
-    return"<tr class=\"clk"+(i===setorSel?" sel":"")+"\" data-i=\""+i+"\"><td>"+esc(B.erb[i])+"</td><td><b>"+esc(B.vis[i])+"</b></td><td class=\"n "+avCls(B.av[i])+"\">"+f2(B.av[i])+
-      "</td><td><span class=\"pill "+pillCls(s)+"\">"+esc(s)+"</span></td></tr>";}).join("")||"<tr><td colspan=\"4\" style=\"color:#888\">Sem setores na data.</td></tr>";
+  $("btnCopSet").disabled=!cel.length;$("btnCopSt").disabled=false;
+  mostrarTratativa();
 }
 
-function mostrarSetor(i){
-  if(!siteSel)return;setorSel=i;
-  [...$("tbCel").tBodies[0].rows].forEach(tr=>tr.classList.toggle("sel",+tr.dataset.i===i));
-  const k=chaveLinha(i),t=trat.get(k);formAtivo(true);
-  const base="SETOR "+B.vis[i]+" · ERB "+B.erb[i]+" · AVAIL "+f2(B.av[i]);
-  $("chaveTxt").textContent="CHAVE: "+k;
-  if(t){
-    $("tCausa").value=t.causa;$("tTMR").value=t.tmr;$("tDesc").value=t.desc;$("tStatus").value=t.status;$("tObs").value=t.obs;
-    $("setorHdr").className="sitehdr edit";$("setorHdr").textContent=base+"  >>> TRATATIVA EXISTENTE (edição)";
-    $("btnSalvar").textContent="Atualizar tratativa";$("btnSalvar").className="btn b-org";$("btnCancelar").disabled=false;
-    setStatus("Setor com tratativa. Altere e clique em 'Atualizar tratativa' ou 'Cancelar tratativa'.");
+/* ===== COPIAR SETORES (SmartPlan) ===== */
+function copiarTexto(s){
+  let ok=false;
+  try{const ta=document.createElement("textarea");ta.value=s;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.left="-9999px";
+    document.body.appendChild(ta);ta.select();ok=document.execCommand("copy");ta.remove();}catch(e){ok=false;}
+  if(ok)return Promise.resolve(true);
+  if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(s).then(()=>true,()=>false);
+  return Promise.resolve(false);
+}
+async function entregarCopia(lista,origem){
+  if(!lista.length){toast("Copiar setores","Nenhum setor para copiar.","wrn");return;}
+  const s=lista.join("\r\n");const ok=await copiarTexto(s);
+  if(ok){toast("Setores copiados",lista.length+" setor(es) · "+origem+" · "+fmtD(dSel)+"\nCole no SmartPlan com Ctrl+V.");
+    setStatus(lista.length+" setor(es) copiado(s) – "+origem+". Cole no SmartPlan com Ctrl+V.");}
+  else{$("mCopiaTxt").value=s;$("mCopia").classList.remove("hide");$("mCopiaTxt").focus();$("mCopiaTxt").select();}
+}
+function copiarSetoresErb(){
+  const r=siteSel;if(!r)return;const vis=new Set(),lista=[];
+  for(const i of setoresDoSite(r)){const v=B.vis[i];if(v&&!vis.has(v)){vis.add(v);lista.push(v);}}
+  entregarCopia(lista,"Site "+r.st+" / ERB "+r.erb);
+}
+function copiarSetoresStation(){
+  const r=siteSel;if(!r)return;entregarCopia(setoresStation(r.st,dSel,false).lista,"STATION "+r.st+" (todas as ERBs/tecnologias)");
+}
+
+/* ===== TRATATIVA DA STATION ===== */
+const CAMPOS=["tDataAb","tCausa","tTMR","tDesc","tObs"];
+function formAtivo(on){CAMPOS.forEach(id=>$(id).disabled=!on);$("formTrat").classList.toggle("off",!on);$("btnSalvar").disabled=!on;}
+function limparForm(){
+  CAMPOS.forEach(id=>$(id).value="");$("tAbPor").value="";formAtivo(false);
+  $("btnSalvar").textContent="Abrir tratativa";$("btnSalvar").className="btn b-red";$("btnConcluir").disabled=true;
+  $("tratHdr").className="sitehdr";$("tratHdr").textContent="Selecione um site/ERB no quadro 1.";
+  $("autoBox").textContent="A tratativa é por STATION (vale para todas as ERBs/tecnologias) e aparece em qualquer data.";
+  $("histTxt").textContent="";
+}
+function limparDetalhe(){siteSel=null;$("tbCel").tBodies[0].innerHTML="";$("tbHist").tBodies[0].innerHTML="";
+  $("siteHdr").textContent="Selecione um site/ERB no quadro 1.";$("btnCopSet").disabled=true;$("btnCopSt").disabled=true;limparForm();}
+function textoHist(k){const c=conc.get(k);if(!c)return"Histórico: nenhuma tratativa concluída.";
+  return"Histórico: "+c.n+" concluída(s), última em "+fmtD(c.dt)+(c.causa?" ("+c.causa+")":"");}
+function mostrarTratativa(){
+  const r=siteSel;if(!r){limparForm();return;}
+  const k=r.st.toUpperCase(),a=ab.get(k);formAtivo(true);
+  $("histTxt").textContent=textoHist(k);
+  if(a){
+    $("tDataAb").value=serialToIso(a.dtAb);$("tAbPor").value=a.abPor;
+    $("tCausa").value=a.causa;$("tTMR").value=a.tmr;$("tDesc").value=a.desc;$("tObs").value=a.obs;
+    $("autoBox").textContent="Gravado na abertura: AVAIL mín "+f2(a.avMin)+" · Setores afetados ("+a.qtd+"): "+(a.setores||"-");
+    $("tratHdr").className="sitehdr edit";$("tratHdr").textContent="TRATATIVA ABERTA · STATION "+r.st+" · desde "+fmtD(a.dtAb);
+    $("btnSalvar").textContent="Atualizar tratativa";$("btnSalvar").className="btn b-org";$("btnConcluir").disabled=false;
+    setStatus("Tratativa ABERTA (vale para todas as ERBs/tecnologias). Altere e clique em 'Atualizar tratativa' ou 'Concluir tratativa'.");
   }else{
+    const s=setoresStation(r.st,dSel,true);
+    $("tDataAb").value=serialToIso(dSel);$("tAbPor").value=usuarioAtual();
     ["tCausa","tTMR","tDesc","tObs"].forEach(id=>$(id).value="");
-    if(!isNaN(B.av[i])&&B.av[i]>=LIMITE_SLA4H)$("tTMR").value="Recuperado dentro do SLA de 4H";
-    $("tStatus").value="Em andamento";
-    $("setorHdr").className="sitehdr ok";$("setorHdr").textContent=base;
-    $("btnSalvar").textContent="Salvar tratativa";$("btnSalvar").className="btn b-red";$("btnCancelar").disabled=true;
-    setStatus("Setor sem tratativa. Passo 3: preencha e clique em 'Salvar tratativa'.");
+    if(isFinite(s.min)&&s.min>=LIMITE_SLA4H)$("tTMR").value="Recuperado dentro do SLA de 4H";
+    $("autoBox").textContent="Será gravado na abertura: AVAIL mín "+f2(s.min)+" · Setores afetados ("+s.lista.length+"): "+(s.lista.join(", ")||"-");
+    $("tratHdr").className="sitehdr ok";$("tratHdr").textContent="STATION "+r.st+" · SEM TRATATIVA ABERTA";
+    $("btnSalvar").textContent="Abrir tratativa";$("btnSalvar").className="btn b-red";$("btnConcluir").disabled=true;
+    setStatus("Passo 2: preencha e clique em 'Abrir tratativa' (1 por STATION, vale para todas as ERBs/tecnologias).");
   }
 }
-function refreshSetores(){if(siteSel)renderSetores(setoresDoSite(siteSel));}
-
 let salvando=false;
-async function salvar(){
-  const i=setorSel,r=siteSel;if(!r||i<0||salvando){toast("Atenção","Selecione o SITE/ERB (1) e o SETOR (2).","wrn");return;}
-  const causa=$("tCausa").value.trim(),tmr=$("tTMR").value.trim(),desc=$("tDesc").value.trim(),status=$("tStatus").value.trim(),obs=$("tObs").value.trim();
-  if(!causa||!status){toast("Campos obrigatórios","Preencha pelo menos 'Causa Disponibilidade' e 'Status'.","wrn");return;}
-  const usuario=$("usuario").value.trim()||"HTML";localStorage.setItem("rnoUsuario",usuario);
-  const k=chaveLinha(i),jaExistia=trat.has(k),a=B.av[i],cnNum=Number(B.cn[i]);
-  const arr=[B.own[i],dSel,B.uf[i],(B.cn[i]!==""&&isFinite(cnNum))?cnNum:B.cn[i],B.st[i],B.erb[i],B.vis[i],isNaN(a)?"":a,
-             causa,tmr,desc,status,B.tec[i],obs,agoraSerial(),usuario,k];
-  salvando=true;$("btnSalvar").disabled=true;
-  try{
-    await Excel.run(async ctx=>{
-      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();
-      const v=body.values,achou=[];
-      v.forEach((row,ri)=>{if(txt(row[4])&&chaveLinhaTrat(row)===k)achou.push(ri);});
-      if(achou.length){
-        t.rows.getItemAt(achou[0]).values=[arr];await ctx.sync();
-        for(let j=achou.length-1;j>=1;j--)t.rows.getItemAt(achou[j]).delete();
-      }else if(v.length===1&&!txt(v[0][4])){t.rows.getItemAt(0).values=[arr];}
-      else{t.rows.add(null,[arr]);}
-      await ctx.sync();
-      const b2=t.getDataBodyRange().load("rowCount");await ctx.sync();
-      t.columns.getItemAt(1).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"dd/mm/yyyy");
-      t.columns.getItemAt(7).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"0.00");
-      t.columns.getItemAt(14).getDataBodyRange().numberFormat=fill(b2.rowCount,1,"dd/mm/yyyy hh:mm");
-      await ctx.sync();
-    });
-    trat.set(k,{causa,tmr,desc,status,obs});
-    refreshSetores();atualizarLinhaSite();mostrarSetor(i);
-    toast(jaExistia?"TRATATIVA ATUALIZADA COM SUCESSO!":"TRATATIVA CADASTRADA COM SUCESSO!",
-      "Site: "+B.st[i]+" ("+B.tec[i]+")\nERB: "+B.erb[i]+"  |  Setor: "+B.vis[i]+"\nData: "+fmtD(dSel)+"\nStatus: "+status);
-    setStatus("Tratativa do setor "+B.vis[i]+" gravada. Selecione outro setor ou site. Salve a pasta (Ctrl+B).");
-  }catch(e){toast("Erro ao gravar a tratativa",e.message||String(e),"err");}
-  finally{salvando=false;$("btnSalvar").disabled=setorSel<0;}
+function lerForm(){return{causa:$("tCausa").value.trim(),tmr:$("tTMR").value.trim(),desc:$("tDesc").value.trim(),obs:$("tObs").value.trim(),dtAb:isoToSerial($("tDataAb").value)};}
+async function recarregarPorConflito(msg){
+  try{await lerTabelaTrat();}catch(e){}
+  atualizarTodosStatus();mostrarTratativa();toast("Atenção",msg+"\nA tela foi recarregada.","wrn");
 }
-
-async function cancelar(){
-  const i=setorSel;if(i<0)return;const k=chaveLinha(i);
-  if(!trat.has(k)){toast("Atenção","Este setor não possui tratativa nesta data.","wrn");return;}
-  const ok=await confirmar("Cancelar tratativa","Confirma o CANCELAMENTO da tratativa deste SETOR?\n\nSite: "+B.st[i]+" ("+B.tec[i]+")\nERB: "+B.erb[i]+"\nSetor: "+B.vis[i]+"\nData: "+fmtD(dSel)+
-    "\n\nA linha será EXCLUÍDA da aba "+ABA_TRAT+" (o ANALITICO não é alterado).");
-  if(!ok)return;let nDel=0;
+async function salvar(){
+  const r=siteSel;if(!r||salvando)return;
+  const F=lerForm();
+  if(!F.causa){toast("Campo obrigatório","Preencha pelo menos 'Causa Disponibilidade'.","wrn");return;}
+  if(!(F.dtAb>0)){toast("Data inválida","Informe a data de abertura.","wrn");return;}
+  if(F.dtAb>Math.floor(agoraSerial())){toast("Data inválida","A data de abertura não pode ser futura.","wrn");return;}
+  const usuario=usuarioAtual();localStorage.setItem("rnoUsuario",usuario);
+  const k=r.st.toUpperCase(),aberta=ab.get(k),agora=agoraSerial();
+  let conflito="",novo=null;
+  salvando=true;$("btnSalvar").disabled=true;$("btnConcluir").disabled=true;
   try{
     await Excel.run(async ctx=>{
-      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();
-      const v=body.values,alvo=[];v.forEach((row,ri)=>{if(txt(row[4])&&chaveLinhaTrat(row)===k)alvo.push(ri);});
-      if(alvo.length&&alvo.length===v.length){for(let j=alvo.length-1;j>=1;j--)t.rows.getItemAt(alvo[j]).delete();t.getDataBodyRange().clear(Excel.ClearApplyTo.contents);}
-      else for(let j=alvo.length-1;j>=0;j--)t.rows.getItemAt(alvo[j]).delete();
-      nDel=alvo.length;await ctx.sync();
+      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();const v=body.values;
+      if(aberta){
+        const ri=v.findIndex(row=>txt(row[TC.ID])===aberta.id&&!ehConcluido(row[TC.STATUS]));
+        if(ri<0){conflito="A tratativa aberta não foi encontrada (pode ter sido concluída ou alterada no outro painel).";return;}
+        const row=v[ri].slice();
+        row[TC.DTAB]=F.dtAb;row[TC.CAUSA]=F.causa;row[TC.TMR]=F.tmr;row[TC.DESC]=F.desc;row[TC.OBS]=F.obs;row[TC.ATUEM]=agora;row[TC.ATUPOR]=usuario;
+        t.rows.getItemAt(ri).values=[row];
+      }else{
+        if(v.some(row=>txt(row[TC.ST]).toUpperCase()===k&&txt(row[TC.ID])&&!ehConcluido(row[TC.STATUS]))){
+          conflito="Já existe uma tratativa ABERTA para esta STATION (gravada pelo outro painel).";return;}
+        const dRef=dayIdx.has(F.dtAb)?F.dtAb:dSel,s=setoresStation(r.st,dRef,true),cn=Number(r.cn);
+        const id=k+"|"+carimbo();
+        const row=[id,r.st,r.uf,(r.cn!==""&&isFinite(cn))?cn:r.cn,r.mun,r.own===SEM_OWNER?"":r.own,STT_AND,F.dtAb,usuario,
+                   F.causa,F.tmr,F.desc,F.obs,isFinite(s.min)?s.min:"",s.lista.length,s.lista.join(", "),"","",agora,usuario];
+        if(v.length===1&&!txt(v[0][TC.ID])&&!txt(v[0][TC.ST]))t.rows.getItemAt(0).values=[row];else t.rows.add(null,[row]);
+        novo={id,dtAb:F.dtAb,abPor:usuario,causa:F.causa,tmr:F.tmr,desc:F.desc,obs:F.obs,avMin:s.min,qtd:s.lista.length,setores:s.lista.join(", ")};
+      }
+      await ctx.sync();await formatarTrat(ctx,t);
     });
-    trat.delete(k);refreshSetores();atualizarLinhaSite();mostrarSetor(i);
-    toast("TRATATIVA CANCELADA COM SUCESSO!","Setor: "+B.vis[i]+"\nLinhas excluídas: "+nDel);
-    setStatus("Tratativa do setor cancelada. Salve a pasta (Ctrl+B).");
-  }catch(e){toast("Erro ao cancelar a tratativa",e.message||String(e),"err");}
+    if(conflito){await recarregarPorConflito(conflito);return;}
+    if(aberta){Object.assign(aberta,{dtAb:F.dtAb,causa:F.causa,tmr:F.tmr,desc:F.desc,obs:F.obs});
+      toast("TRATATIVA ATUALIZADA COM SUCESSO!","STATION: "+r.st);}
+    else{ab.set(k,novo);
+      toast("TRATATIVA ABERTA COM SUCESSO!","STATION: "+r.st+" (todas as ERBs/tecnologias)\nData abertura: "+fmtD(F.dtAb)+"\nSetores afetados: "+novo.qtd);}
+    atualizarStatusStation(r.st);mostrarTratativa();
+    setStatus("Tratativa da STATION "+r.st+" gravada. Salve a pasta (Ctrl+B).");
+  }catch(e){toast("Erro ao gravar a tratativa",e.message||String(e),"err");mostrarTratativa();}
+  finally{salvando=false;}
+}
+async function concluir(){
+  const r=siteSel;if(!r||salvando)return;const k=r.st.toUpperCase(),aberta=ab.get(k);if(!aberta)return;
+  const F=lerForm();if(!F.causa){toast("Campo obrigatório","Preencha 'Causa Disponibilidade' antes de concluir.","wrn");return;}
+  const dtAb=F.dtAb>0?F.dtAb:aberta.dtAb,usuario=usuarioAtual(),agora=agoraSerial();
+  const ok=await confirmar("Concluir tratativa","Confirma a CONCLUSÃO da tratativa da STATION "+r.st+"?\n\nAberta em: "+fmtD(dtAb)+
+    "\nData de conclusão: agora\n\nStatus passa a 'Concluído'. A tratativa fica no histórico e uma NOVA tratativa poderá ser aberta para esta STATION.","Sim, concluir");
+  if(!ok)return;
+  let conflito="";salvando=true;$("btnSalvar").disabled=true;$("btnConcluir").disabled=true;
+  try{
+    await Excel.run(async ctx=>{
+      const t=await garantirTabelaTrat(ctx);const body=t.getDataBodyRange().load("values");await ctx.sync();const v=body.values;
+      const ri=v.findIndex(row=>txt(row[TC.ID])===aberta.id&&!ehConcluido(row[TC.STATUS]));
+      if(ri<0){conflito="A tratativa aberta não foi encontrada (pode ter sido concluída no outro painel).";return;}
+      const row=v[ri].slice();
+      row[TC.STATUS]=STT_CONC;row[TC.DTAB]=dtAb;row[TC.CAUSA]=F.causa;row[TC.TMR]=F.tmr;row[TC.DESC]=F.desc;row[TC.OBS]=F.obs;
+      row[TC.DTCONC]=agora;row[TC.CONCPOR]=usuario;row[TC.ATUEM]=agora;row[TC.ATUPOR]=usuario;
+      t.rows.getItemAt(ri).values=[row];await ctx.sync();await formatarTrat(ctx,t);
+    });
+    if(conflito){await recarregarPorConflito(conflito);return;}
+    ab.delete(k);const c=conc.get(k)||{n:0,dt:0,causa:""};c.n++;c.dt=Math.floor(agora);c.causa=F.causa;conc.set(k,c);
+    atualizarStatusStation(r.st);mostrarTratativa();
+    toast("TRATATIVA CONCLUÍDA COM SUCESSO!","STATION: "+r.st+"\nUma nova tratativa já pode ser aberta.");
+    setStatus("Tratativa da STATION "+r.st+" concluída. Salve a pasta (Ctrl+B).");
+  }catch(e){toast("Erro ao concluir a tratativa",e.message||String(e),"err");mostrarTratativa();}
+  finally{salvando=false;}
 }
 
 async function prepararAba(ctx,nome){
@@ -606,23 +695,24 @@ async function prepararAba(ctx,nome){
 }
 async function exportar(){
   if(!sitesView.length){toast("Exportar","Não há sites na lista.","wrn");return;}
-  const soAtt=$("fAtt").checked;
-  const out=[["DATA","STATION","TECNOLOGIA","UF","CN","MUNICÍPIO","CELL OWNER","ERB","SETOR (VISAO_FILTRO)","AVAIL","STATUS TRATATIVA",
-              "CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO","CHAVE"]];
+  const soAtt=$("fAtt").checked,NC=17;
+  const out=[["DATA","STATION","TECNOLOGIA","UF","CN","MUNICÍPIO","CELL OWNER","ERB","SETOR (VISAO_FILTRO)","AVAIL","TRATATIVA DA STATION",
+              "DATA ABERTURA","CAUSA DISPONIBILIDADE","CAUSA TMR","DESCRIÇÃO DA FALHA","OBSERVAÇÃO","ID_TRATATIVA"]];
   for(const r of sitesView){
+    const a=ab.get(r.st.toUpperCase())||null,stt=statusStation(r.st);
     for(const i of setoresDoSite(r)){
-      const a=B.av[i];if(soAtt&&!(!isNaN(a)&&a<=LIMITE))continue;
-      const k=chaveLinha(i),t=trat.get(k)||{},cn=Number(B.cn[i]);
-      out.push([dSel,B.st[i],B.tec[i],B.uf[i],(B.cn[i]!==""&&isFinite(cn))?cn:B.cn[i],B.mun[i],B.own[i],B.erb[i],B.vis[i],isNaN(a)?"":a,
-                t.status||SEM_TRAT,t.causa||"",t.tmr||"",t.desc||"",t.obs||"",k]);
+      const av=B.av[i];if(soAtt&&!(!isNaN(av)&&av<=LIMITE))continue;const cn=Number(B.cn[i]);
+      out.push([dSel,B.st[i],B.tec[i],B.uf[i],(B.cn[i]!==""&&isFinite(cn))?cn:B.cn[i],B.mun[i],B.own[i],B.erb[i],B.vis[i],isNaN(av)?"":av,
+                stt,a&&a.dtAb>0?a.dtAb:"",a?a.causa:"",a?a.tmr:"",a?a.desc:"",a?a.obs:"",a?a.id:""]);
     }
   }
   const n=out.length-1;if(!n){toast("Exportar","Nenhum setor para exportar.","wrn");return;}
   try{
     await Excel.run(async ctx=>{
-      const ws=await prepararAba(ctx,ABA_EXPORT);const rg=ws.getRangeByIndexes(0,0,n+1,16);rg.values=out;
-      const h=ws.getRangeByIndexes(0,0,1,16);h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
+      const ws=await prepararAba(ctx,ABA_EXPORT);const rg=ws.getRangeByIndexes(0,0,n+1,NC);rg.values=out;
+      const h=ws.getRangeByIndexes(0,0,1,NC);h.format.fill.color="#E60000";h.format.font.color="#FFFFFF";h.format.font.bold=true;
       ws.getRangeByIndexes(1,0,n,1).numberFormat=fill(n,1,"dd/mm/yyyy");ws.getRangeByIndexes(1,9,n,1).numberFormat=fill(n,1,"0.00");
+      ws.getRangeByIndexes(1,11,n,1).numberFormat=fill(n,1,"dd/mm/yyyy");
       ws.autoFilter.apply(rg);rg.format.autofitColumns();ws.activate();await ctx.sync();
     });
     toast("Exportação concluída",n+" setor(es) de "+sitesView.length+" site/ERB na aba '"+ABA_EXPORT+"'.");
@@ -667,8 +757,8 @@ async function evolExcel(){
   try{
     await Excel.run(async ctx=>{
       const ws=await prepararAba(ctx,ABA_EVOL);
-      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+txtFiltro("fTec")+"  UF: "+txtFiltro("fUF")+"  CN: "+txtFiltro("fCN")+
-        "  Município: "+txtFiltro("fMun")+"  Owner: "+txtFiltro("fOwn")]];
+      ws.getRange("A1").values=[["EVOLUTIVO DIÁRIO DE DISPONIBILIDADE - "+E.mes+"   |   Tec: "+msResumo("fTec")+"  UF: "+msResumo("fUF")+"  CN: "+msResumo("fCN")+
+        "  Município: "+msResumo("fMun")+"  Owner: "+msResumo("fOwn")]];
       ws.getRange("A1").format.font.bold=true;ws.getRange("A1").format.font.size=13;ws.getRange("A1").format.font.color="#548235";
       ws.getRange("A2:C2").values=[["Meta AVAIL:",LIMITE,"Vermelho: <= meta | Verde: > meta | Valor do dia = "+(E.metr==="MIN"?"pior setor da ERB":"média dos setores da ERB")]];
       const rg=ws.getRangeByIndexes(3,0,n+1,NC);rg.values=out;
@@ -691,8 +781,9 @@ function ligarEventos(){
   $("btnLimpar").addEventListener("click",()=>{msFechar();$("fData").selectedIndex=0;["fTec","fUF","fCN","fMun","fOwn","fStat"].forEach(msLimpar);
     $("fBusca").value="";$("fAtt").checked=true;aplicarFiltro();});
   $("tbSites").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-ix]");if(tr)mostrarSite(+tr.dataset.ix);});
-  $("tbCel").tBodies[0].addEventListener("click",e=>{const tr=e.target.closest("tr[data-i]");if(tr)mostrarSetor(+tr.dataset.i);});
-  $("btnSalvar").addEventListener("click",salvar);$("btnCancelar").addEventListener("click",cancelar);
+  $("btnCopSet").addEventListener("click",copiarSetoresErb);$("btnCopSt").addEventListener("click",copiarSetoresStation);
+  $("mCopiaOk").addEventListener("click",()=>$("mCopia").classList.add("hide"));
+  $("btnSalvar").addEventListener("click",salvar);$("btnConcluir").addEventListener("click",concluir);
   $("btnExportar").addEventListener("click",exportar);$("btnEvolExcel").addEventListener("click",evolExcel);
   $("eMetr").addEventListener("change",renderEvolutivo);$("btnRecarregar").addEventListener("click",carregarTudo);
   $("tabTrat").addEventListener("click",()=>{$("tabTrat").classList.add("on");$("tabEvol").classList.remove("on");$("pgTrat").classList.remove("hide");$("pgEvol").classList.add("hide");});
